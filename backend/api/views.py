@@ -10,12 +10,28 @@ import tempfile
 from django.conf import settings
 
 
+def escape_latex(text):
+    replacements = {
+        "&": "\\&",
+        "%": "\\%",
+        "$": "\\$",
+        "#": "\\#",
+        "_": "\\_",
+        "{": "\\{",
+        "}": "\\}",
+    }
+    for k, v in replacements.items():
+        text = text.replace(k, v)
+
+    return text.replace("\n", "\\\\\n")
+
 # TODO: move inner logic to another layer
 @api_view(['POST'])
 def compile_handler(request):
     text = request.data.get("text", "")
-    font = request.data.get("font", "")
+    processed_text = escape_latex(text)
 
+    font = request.data.get("font", "")
     font_path = settings.BASE_DIR / "fonts"
     font_path_str = str(font_path) + "/"
 
@@ -23,7 +39,6 @@ def compile_handler(request):
 
     # TODO: \\usepackage[margin=1in]{{geometry}} ?
 
-    # TODO: add breaks between lines (somehow get from frontend)
     # TODO: add/remove first line tab...
     tex_content = f"""
 \\documentclass{{article}}
@@ -34,7 +49,7 @@ def compile_handler(request):
 ]
 
 \\begin{{document}}
-{text}
+{processed_text}
 \\end{{document}}
 """
 

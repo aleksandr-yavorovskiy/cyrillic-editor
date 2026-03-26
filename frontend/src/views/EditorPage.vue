@@ -4,8 +4,8 @@
       <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" />
       <button @click="$refs.fileInput.click()">Импортировать</button>
 
-      <button @click="compileText">Compile</button>
-      <button @click="testBackend">Test Backend</button>
+      <button @click="compileText">Компилировать</button>
+      <button @click="testBackend">Проверить соединение с сервером</button>
       <select v-model="selectedFont">
         <option v-for="font in fonts" :key="font" :value="font">
           {{ font }}
@@ -27,9 +27,25 @@
     </div>
 
     <div class="keyboard">
-      <button v-for="symbol in cyrillicSymbols" :key="symbol" @click="insertSymbol(symbol)">
-        {{ symbol }}
-      </button>
+      <div class="keyboard-tabs">
+        <button
+          v-for="group in keyboard"
+          :key="group.key"
+          @click="activeTab = group.key"
+        >
+          {{ group.label }}
+        </button>
+      </div>
+
+      <div class="keyboard-content">
+        <button
+          v-for="symbol in keyboard.find(g => g.key === activeTab).symbols"
+          :key="symbol"
+          @click="insertSymbol(symbol)"
+        >
+          {{ symbol }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -40,7 +56,29 @@ export default {
     return {
       text: '',
       pdfUrl: '',
-      cyrillicSymbols: ['Ѧ', 'Ѫ', '҂', '҃', '҄'], // TODO: change symbols, get from dictionary
+      keyboard: [
+        {
+          key: 'cyrillic',
+          label: 'Кириллица',
+          symbols: ['Ѣ','ѣ','Ѳ','ѳ','Ѵ','ѵ','Ѧ','ѧ','Ѫ','ѫ']
+        },
+        {
+          key: 'uppercase',
+          label: 'выносные',
+          symbols: [' ⷠ','ⷡ',' ⷢ']
+        },
+        {
+          key: 'superscript',
+          label: 'Диакритика',
+          symbols: ['҃','҄','҅','҆','҇']
+        },
+        // {
+        //   key: 'titlo',
+        //   label: 'Титла',
+        //   symbols: ['҃','҇']
+        // }
+      ], // TODO: change symbols, get from dictionary
+      activeTab: 'cyrillic',
       fonts: [
         'PonomarUnicode',
         'FlaviusUniversal',
@@ -168,9 +206,22 @@ export default {
 
 .keyboard {
   display: flex;
-  flex-wrap: wrap;
-  padding: 10px;
-  background-color: #f9f9f9;
+  flex-direction: column;
+  height: 150px;
+  border-top: 1px solid #ccc;
+}
+
+.keyboard-tabs {
+  display: flex;
+}
+
+.keyboard-content {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 5px;
+  padding: 5px;
 }
 
 .keyboard button {
