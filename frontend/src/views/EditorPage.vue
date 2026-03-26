@@ -7,13 +7,19 @@
       <button @click="compileText">Compile</button>
       <button @click="testBackend">Test Backend</button>
       <select v-model="selectedFont">
-        <option value="default">Default Font</option>
-        <!-- TODO: get available fonts, use here -->
+        <option v-for="font in fonts" :key="font" :value="font">
+          {{ font }}
+        </option>
       </select>
     </div>
 
     <div class="content">
-      <textarea v-model="text" class="text-editor"></textarea>
+      <textarea
+        v-model="text"
+        class="text-editor"
+        :style="{ fontFamily: selectedFont }"
+      />
+
       <div class="pdf-preview">
         <iframe v-if="pdfUrl" :src="pdfUrl" frameborder="0"></iframe>
         <p v-else>No preview available</p>
@@ -33,9 +39,16 @@ export default {
   data() {
     return {
       text: '',
-      selectedFont: 'default',
       pdfUrl: '',
       cyrillicSymbols: ['Ѧ', 'Ѫ', '҂', '҃', '҄'], // TODO: change symbols, get from dictionary
+      fonts: [
+        'PonomarUnicode',
+        'FlaviusUniversal',
+        'FlavExpUniversal',
+        'menaionunicode',
+        'bukyvede'
+      ],
+      selectedFont: 'PonomarUnicode',
     };
   },
   methods: {
@@ -95,8 +108,20 @@ export default {
         });
     },
     insertSymbol(symbol) {
-      this.text += symbol;
-    },
+      const textarea = this.$el.querySelector('.text-editor');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      this.text =
+        this.text.slice(0, start) +
+        symbol +
+        this.text.slice(end);
+
+      this.$nextTick(() => {
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + symbol.length;
+      });
+    }
   },
 };
 </script>
@@ -130,6 +155,15 @@ export default {
   flex: 1;
   padding: 10px;
   border-left: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-preview iframe {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 
 .keyboard {
@@ -144,4 +178,27 @@ export default {
   padding: 10px;
   font-size: 16px;
 }
+
+@font-face {
+  font-family: 'BukyVede';
+  src: url('/fonts/bukyvede.ttf');
+}
+
+@font-face {
+  font-family: 'FlaviusUniversal';
+  src: url('/fonts/FlaviusUniversal.ttf');
+}
+
+/* TODO: add flavexp */
+
+@font-face {
+  font-family: 'MenaionUnicode';
+  src: url('/fonts/menaionunicode.otf');
+}
+
+@font-face {
+  font-family: 'PonomarUnicode';
+  src: url('/fonts/PonomarUnicode.otf');
+}
+
 </style>

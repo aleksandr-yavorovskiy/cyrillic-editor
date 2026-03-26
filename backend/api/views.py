@@ -1,14 +1,74 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from rest_framework.decorators import api_view
 from pathlib import Path
 from docx import Document
 from PyPDF2 import PdfReader
 from io import BytesIO
+import os
+import subprocess
+import tempfile
+from django.conf import settings
 
 
+# TODO: move inner logic to another layer
 @api_view(['POST'])
 def compile_handler(request):
-    return JsonResponse({"message": "hello world"})
+    text = request.data.get("text", "")
+    font = request.data.get("font", "")
+
+    font_path = settings.BASE_DIR / "fonts"
+    font_path_str = str(font_path) + "/"
+
+    font_path = "/home/ysd/spbu-diploma/cyrillic-editor/backend/fonts/"
+
+    # TODO: \\usepackage[margin=1in]{{geometry}} ?
+
+    # TODO: add breaks between lines (somehow get from frontend)
+    # TODO: add/remove first line tab...
+    tex_content = f"""
+\\documentclass{{article}}
+\\usepackage{{fontspec}}
+
+\\setmainfont{{{font}}}[
+    Path={font_path_str}
+]
+
+\\begin{{document}}
+{text}
+\\end{{document}}
+"""
+
+    tex_file = "file.tex"
+    pdf_file = "file.pdf"
+
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tex_path = os.path.join(tmpdir, tex_file)
+
+            with open(tex_path, "w", encoding="utf-8") as f:
+                f.write(tex_content)
+
+            subprocess.run(
+                ["xelatex", "-interaction=nonstopmode", tex_file],
+                cwd=tmpdir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            pdf_path = os.path.join(tmpdir, pdf_file)
+
+            if not os.path.exists(pdf_path):
+                return HttpResponse("PDF not generated", status=500)
+
+            with open(pdf_path, "rb") as f:
+                pdf_bytes = f.read()
+
+            response = HttpResponse(pdf_bytes, content_type="application/pdf")
+            response["Content-Disposition"] = "inline; filename=result.pdf"
+            return response
+
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
 
 
 @api_view(['GET'])

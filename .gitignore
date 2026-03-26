@@ -1,3 +1,4 @@
-node_modules
-
-.eslintcache
+frontend/node_modules
+frontend/.eslintcache
+.vite/
+backend/api/__pycache__
