@@ -51,6 +51,38 @@
 </template>
 
 <script>
+import ponomar from '@/dictionaries/PonomarUnicode.json'
+import bukyvede from '@/dictionaries/bukyvede.json'
+import flavius from '@/dictionaries/FlaviusUniversal.json'
+
+const dictionaries = {
+  PonomarUnicode: ponomar,
+  BukyVede: bukyvede,
+  FlaviusUniversal: flavius,
+}
+
+function convertText(text, fromDict, toDict) {
+  let result = ""
+
+  for (let char of text) {
+    let unicodeChar = char
+
+    // old font -> unicode
+    if (fromDict && fromDict.FontToUnicode[char]) {
+      unicodeChar = fromDict.FontToUnicode[char]
+    }
+
+    // unicode -> new font
+    if (toDict && toDict.UnicodeToFont[unicodeChar]) {
+      result += toDict.UnicodeToFont[unicodeChar]
+    } else {
+      result += unicodeChar
+    }
+  }
+
+  return result
+}
+
 export default {
   data() {
     return {
@@ -84,10 +116,18 @@ export default {
         'FlaviusUniversal',
         'FlavExpUniversal',
         'menaionunicode',
-        'bukyvede'
+        'bukyvede' // TODO: BukyVede?
       ],
       selectedFont: 'PonomarUnicode',
     };
+  },
+  watch: {
+    selectedFont(newFont, oldFont) {
+      const fromDict = dictionaries[oldFont]
+      const toDict = dictionaries[newFont]
+
+      this.text = convertText(this.text, fromDict, toDict)
+    }
   },
   methods: {
     testBackend() {
