@@ -5,6 +5,7 @@
       <button @click="$refs.fileInput.click()">Импортировать</button>
 
       <button @click="compileText">Компилировать</button>
+      <button @click="exportDocx">Экспорт в .docx</button>
       <button @click="testBackend">Проверить соединение с сервером</button>
       <select v-model="selectedFont">
         <option v-for="font in fonts" :key="font" :value="font">
@@ -54,11 +55,13 @@
 import ponomar from '@/dictionaries/PonomarUnicode.json'
 import bukyvede from '@/dictionaries/bukyvede.json'
 import flavius from '@/dictionaries/FlaviusUniversal.json'
+// TODO: add other fonts
 
 const dictionaries = {
   PonomarUnicode: ponomar,
   BukyVede: bukyvede,
   FlaviusUniversal: flavius,
+// TODO: add other fonts
 }
 
 function convertText(text, fromDict, toDict) {
@@ -130,6 +133,32 @@ export default {
     }
   },
   methods: {
+    exportDocx() {
+      fetch('/api/export-docx/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: this.text,
+        }),
+      })
+        .then(response => response.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob)
+
+          const a = document.createElement('a')
+          a.href = url
+          a.download = 'document.docx'
+          a.click()
+
+          window.URL.revokeObjectURL(url)
+        })
+        .catch(err => {
+          console.error(err)
+          alert('Ошибка экспорта')
+        })
+    },
     testBackend() {
       fetch('/api/ping/')
         .then(res => res.json())

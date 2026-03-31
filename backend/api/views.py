@@ -121,3 +121,29 @@ def import_file(request):
     return JsonResponse({
         "text": result,
     })
+
+
+@api_view(['POST'])
+def export_docx(request):
+    text = request.data.get("text", "")
+
+    document = Document()
+
+    lines = text.split("\n")
+
+    # TODO: add font?
+
+    for line in lines:
+        document.add_paragraph(line)
+
+    buffer = BytesIO()
+    document.save(buffer)
+    buffer.seek(0)
+
+    response = HttpResponse(
+        buffer.read(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+    response['Content-Disposition'] = 'attachment; filename="document.docx"'
+
+    return response
