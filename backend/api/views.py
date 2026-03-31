@@ -39,7 +39,6 @@ def compile_handler(request):
 
     # TODO: \\usepackage[margin=1in]{{geometry}} ?
 
-    # TODO: add/remove first line tab...
     tex_content = f"""
 \\documentclass{{article}}
 \\usepackage{{fontspec}}
@@ -49,7 +48,7 @@ def compile_handler(request):
 ]
 
 \\begin{{document}}
-{processed_text}
+\\noindent {processed_text}
 \\end{{document}}
 """
 
