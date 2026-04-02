@@ -8,7 +8,10 @@ import os
 import subprocess
 import tempfile
 from django.conf import settings
+import logging
 
+
+logger = logging.getLogger("api")
 
 
 def escape_latex(text):
@@ -98,9 +101,11 @@ def import_file(request):
     file = request.FILES.get("file")
 
     if not file:
+        logger.debug("import: no file uploaded")
         return JsonResponse({"error": "No file uploaded"}, status=400)
 
     filename = file.name
+    logger.debug(f"import: got file: {filename}")
 
     result = ""
     if filename.endswith(".txt"):

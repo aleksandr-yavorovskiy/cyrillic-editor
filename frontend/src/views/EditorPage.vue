@@ -33,6 +33,7 @@
           v-for="group in keyboard"
           :key="group.key"
           @click="activeTab = group.key"
+          :class="{ active: activeTab === group.key }"
         >
           {{ group.label }}
         </button>
@@ -43,6 +44,7 @@
           v-for="symbol in keyboard.find(g => g.key === activeTab).symbols"
           :key="symbol"
           @click="insertSymbol(symbol)"
+          :style="{ fontFamily: selectedFont }"
         >
           {{ symbol }}
         </button>
@@ -53,9 +55,15 @@
 
 <script>
 import ponomar from '@/dictionaries/PonomarUnicode.json'
-import bukyvede from '@/dictionaries/bukyvede.json'
+import bukyvede from '@/dictionaries/BukyVede.json'
 import flavius from '@/dictionaries/FlaviusUniversal.json'
+import menaion from '@/dictionaries/MenaionUnicode.json'
 // TODO: add other fonts
+
+import cyrillicLetters from '@/keyboard/cyrillic.json'
+import uppercaseSymbols from '@/keyboard/uppercase.json'
+import diacriticSymbols from '@/keyboard/diacritic.json'
+
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -63,6 +71,7 @@ const dictionaries = {
   PonomarUnicode: ponomar,
   BukyVede: bukyvede,
   FlaviusUniversal: flavius,
+  MenaionUnicode: menaion
 // TODO: add other fonts
 }
 
@@ -73,12 +82,12 @@ function convertText(text, fromDict, toDict) {
     let unicodeChar = char
 
     // old font -> unicode
-    if (fromDict && fromDict.FontToUnicode[char]) {
+    if (fromDict && char in fromDict.FontToUnicode) {
       unicodeChar = fromDict.FontToUnicode[char]
     }
 
     // unicode -> new font
-    if (toDict && toDict.UnicodeToFont[unicodeChar]) {
+    if (toDict && unicodeChar in toDict.UnicodeToFont) {
       result += toDict.UnicodeToFont[unicodeChar]
     } else {
       result += unicodeChar
@@ -97,30 +106,25 @@ export default {
         {
           key: 'cyrillic',
           label: 'Кириллица',
-          symbols: ['Ѣ','ѣ','Ѳ','ѳ','Ѵ','ѵ','Ѧ','ѧ','Ѫ','ѫ']
+          symbols: cyrillicLetters
         },
         {
           key: 'uppercase',
           label: 'выносные',
-          symbols: [' ⷠ','ⷡ',' ⷢ']
+          symbols: uppercaseSymbols
         },
         {
           key: 'superscript',
           label: 'Диакритика',
-          symbols: ['҃','҄','҅','҆','҇']
+          symbols: diacriticSymbols
         },
-        // {
-        //   key: 'titlo',
-        //   label: 'Титла',
-        //   symbols: ['҃','҇']
-        // }
       ], // TODO: change symbols, get from dictionary
       activeTab: 'cyrillic',
       fonts: [
         'PonomarUnicode',
         'FlaviusUniversal',
         'FlavExpUniversal',
-        'menaionunicode',
+        'menaionunicode', // TODO: menaion
         'bukyvede' // TODO: BukyVede?
       ],
       selectedFont: 'PonomarUnicode',
@@ -303,7 +307,7 @@ export default {
 
 @font-face {
   font-family: 'BukyVede';
-  src: url('/fonts/bukyvede.ttf');
+  src: url('/fonts/bukyvede.ttf'); /* TODO: BukyVede */
 }
 
 @font-face {
@@ -312,10 +316,14 @@ export default {
 }
 
 /* TODO: add flavexp */
+@font-face {
+  font-family: 'FlavExpUniversal';
+  src: url('/fonts/FlavExpUniversal.ttf');
+}
 
 @font-face {
   font-family: 'MenaionUnicode';
-  src: url('/fonts/menaionunicode.otf');
+  src: url('/fonts/menaionunicode.otf'); /* TODO: MenaionUnicode */
 }
 
 @font-face {

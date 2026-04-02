@@ -1,8 +1,8 @@
 FROM python:3.10
 
 RUN apt-get update && apt-get install -y \
-    texlive-xetex 
-#     && rm -rf /var/lib/apt/lists/*
+    texlive-xetex \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
