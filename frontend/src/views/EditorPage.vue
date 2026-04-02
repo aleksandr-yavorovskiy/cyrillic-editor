@@ -57,6 +57,8 @@ import bukyvede from '@/dictionaries/bukyvede.json'
 import flavius from '@/dictionaries/FlaviusUniversal.json'
 // TODO: add other fonts
 
+const API_URL = import.meta.env.VITE_API_URL
+
 const dictionaries = {
   PonomarUnicode: ponomar,
   BukyVede: bukyvede,
@@ -134,7 +136,7 @@ export default {
   },
   methods: {
     exportDocx() {
-      fetch('/api/export-docx/', {
+      fetch(`${API_URL}/api/export-docx/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,18 +158,18 @@ export default {
         })
         .catch(err => {
           console.error(err)
-          alert('Ошибка экспорта')
+          alert('Ошибка экспорта.')
         })
     },
     testBackend() {
-      fetch('/api/ping/')
+      fetch(`${API_URL}/api/ping/`)
         .then(res => res.json())
         .then(data => {
           alert(data.message);
         })
         .catch(err => {
           console.error(err);
-          alert("Error connecting to backend");
+          alert(`Error connecting to backend. API_URL:${API_URL}`);
         });
     },
     handleFileUpload(event) {
@@ -177,7 +179,7 @@ export default {
       const formData = new FormData();
       formData.append("file", file);
 
-      fetch('/api/import/', {
+      fetch(`${API_URL}/api/import/`, {
         method: 'POST',
         body: formData,
       })
@@ -196,7 +198,7 @@ export default {
         });
     },
     compileText() {
-      fetch('/api/compile/', {
+      fetch(`${API_URL}/api/compile/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

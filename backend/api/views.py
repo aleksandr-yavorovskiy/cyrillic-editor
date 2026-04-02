@@ -10,6 +10,7 @@ import tempfile
 from django.conf import settings
 
 
+
 def escape_latex(text):
     replacements = {
         "&": "\\&",
