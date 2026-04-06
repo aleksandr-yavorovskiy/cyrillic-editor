@@ -29,6 +29,14 @@ def escape_latex(text):
 
     return text.replace("\n", "\\\\\n")
 
+
+def to_measure_units(margin_num, measure_units, default=2):
+    try:
+        return f"{margin_num}{measure_units}"
+    except:
+        return f"{default}{measure_units}"
+
+
 # TODO: move inner logic to another layer
 @api_view(['POST'])
 def compile_handler(request):
@@ -41,18 +49,33 @@ def compile_handler(request):
 
     font_path = "/home/ysd/spbu-diploma/cyrillic-editor/backend/fonts/"
 
-    # TODO: \\usepackage[margin=1in]{{geometry}} ?
+    # TODO: move units to const/enum
+    top = to_measure_units(request.data.get("top"), "cm")
+    bottom = to_measure_units(request.data.get("bottom"), "cm")
+    left = to_measure_units(request.data.get("left"), "cm")
+    right = to_measure_units(request.data.get("right"), "cm")
 
     tex_content = f"""
 \\documentclass{{article}}
 \\usepackage{{fontspec}}
+\\usepackage{{seqsplit}}
+\\usepackage[margin=1in]{{geometry}}
 
 \\setmainfont{{{font}}}[
     Path={font_path_str}
 ]
 
+\\geometry{{
+  top={top},
+  bottom={bottom},
+  left={left},
+  right={right}
+}}
+
+\\hyphenation{{}}
+
 \\begin{{document}}
-\\noindent {processed_text}
+\\noindent \\seqsplit{{{processed_text}}}
 \\end{{document}}
 """
 

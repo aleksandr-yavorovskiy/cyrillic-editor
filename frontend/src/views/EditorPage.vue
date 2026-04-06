@@ -4,9 +4,13 @@
       <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" />
       <button @click="$refs.fileInput.click()">Импортировать</button>
 
+      <button @click="showMarginsModal = true">
+        Настроить отступы
+      </button>
+
       <button @click="compileText">Компилировать</button>
       <button @click="exportDocx">Экспорт в .docx</button>
-      <button @click="testBackend">Проверить соединение с сервером</button>
+      <!-- <button @click="testBackend">Проверить соединение с сервером</button> -->
       <select v-model="selectedFont">
         <option v-for="font in fonts" :key="font" :value="font">
           {{ font }}
@@ -16,6 +20,7 @@
 
     <div class="content">
       <textarea
+        ref="textEditor"
         v-model="text"
         class="text-editor"
         :style="{ fontFamily: selectedFont }"
@@ -23,12 +28,16 @@
 
       <div class="pdf-preview">
         <iframe v-if="pdfUrl" :src="pdfUrl" frameborder="0"></iframe>
-        <p v-else>No preview available</p>
+        <p v-else>PDF не скомпилирован</p>
       </div>
     </div>
 
     <div class="keyboard">
       <div class="keyboard-tabs">
+        <label class="checkbox">
+          <input type="checkbox" v-model="showUppercase" />
+          Заглавные буквы
+        </label>
         <button
           v-for="group in keyboard"
           :key="group.key"
@@ -40,14 +49,55 @@
       </div>
 
       <div class="keyboard-content">
+
+        <!-- TODO: use keyboard dictionary instead -->
         <button
-          v-for="symbol in keyboard.find(g => g.key === activeTab).symbols"
+          v-for="symbol in filterSymbols(
+            keyboard.find(g => g.key === activeTab).symbols,
+            activeTab
+            )"
           :key="symbol"
           @click="insertSymbol(symbol)"
           :style="{ fontFamily: selectedFont }"
         >
           {{ symbol }}
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div 
+    v-if="showMarginsModal"
+    class="modal-overlay"
+    @click.self="showMarginsModal = false"
+  >
+    <div class="modal">
+      <h3>Отступы (см)</h3>
+
+      <div class="margins">
+        <div v-for="(value, key) in margins" :key="key" class="margin-control">
+          <label>
+            {{
+              {
+                top: 'Сверху',
+                bottom: 'Снизу',
+                left: 'Слева',
+                right: 'Справа'
+              }[key]
+            }}
+          </label>
+
+          <input
+            type="number"
+            step="0.5"
+            min="0"
+            v-model.number="margins[key]"
+          />
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button @click="showMarginsModal = false">Закрыть</button>
       </div>
     </div>
   </div>
@@ -61,8 +111,10 @@ import menaion from '@/dictionaries/MenaionUnicode.json'
 // TODO: add other fonts
 
 import cyrillicLetters from '@/keyboard/cyrillic.json'
+import slavicLetters from '@/keyboard/slavic.json'
 import uppercaseSymbols from '@/keyboard/uppercase.json'
 import diacriticSymbols from '@/keyboard/diacritic.json'
+import punctuationSymbols from '@/keyboard/punctuation.json'
 
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -109,8 +161,13 @@ export default {
           symbols: cyrillicLetters
         },
         {
+          key: 'slavic',
+          label: 'Доп. старославянские',
+          symbols: slavicLetters
+        },
+        {
           key: 'uppercase',
-          label: 'выносные',
+          label: 'Выносные',
           symbols: uppercaseSymbols
         },
         {
@@ -118,8 +175,14 @@ export default {
           label: 'Диакритика',
           symbols: diacriticSymbols
         },
-      ], // TODO: change symbols, get from dictionary
+        {
+          key: 'punctuation',
+          label: 'Пунктуация',
+          symbols: punctuationSymbols
+        },
+      ],
       activeTab: 'cyrillic',
+      showUppercase: true,
       fonts: [
         'PonomarUnicode',
         'FlaviusUniversal',
@@ -128,6 +191,13 @@ export default {
         'bukyvede' // TODO: BukyVede?
       ],
       selectedFont: 'PonomarUnicode',
+      showMarginsModal: false,
+      margins: {
+        top: 2,
+        bottom: 2,
+        left: 2,
+        right: 2
+      },
     };
   },
   watch: {
@@ -139,6 +209,13 @@ export default {
     }
   },
   methods: {
+    filterSymbols(symbols, tabKey) {
+      if (tabKey !== 'cyrillic') return symbols
+
+      if (this.showUppercase) return symbols
+
+      return symbols.filter(s => s !== s.toUpperCase())
+    },
     exportDocx() {
       fetch(`${API_URL}/api/export-docx/`, {
         method: 'POST',
@@ -210,6 +287,10 @@ export default {
         body: JSON.stringify({
           text: this.text,
           font: this.selectedFont,
+          top: this.margins.top,
+          bottom: this.margins.bottom,
+          left: this.margins.left,
+          right: this.margins.right,
         }),
       })
         .then((response) => response.blob())
@@ -221,7 +302,7 @@ export default {
         });
     },
     insertSymbol(symbol) {
-      const textarea = this.$el.querySelector('.text-editor');
+      const textarea = this.$refs.textEditor;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
 
@@ -253,6 +334,28 @@ export default {
   background-color: #f0f0f0;
 }
 
+.margins {
+  display: flex;
+  gap: 10px;
+}
+
+.margin-control {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.margin-control input {
+  width: 50px;
+  text-align: center;
+}
+
+.margin-control button {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
 .content {
   display: flex;
   flex: 1;
@@ -282,7 +385,7 @@ export default {
 .keyboard {
   display: flex;
   flex-direction: column;
-  height: 150px;
+  height: 300px;
   border-top: 1px solid #ccc;
 }
 
@@ -293,7 +396,7 @@ export default {
 .keyboard-content {
   flex: 1;
   overflow-y: auto;
-  display: grid;
+  /* display: grid; */
   grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
   gap: 5px;
   padding: 5px;
@@ -302,7 +405,32 @@ export default {
 .keyboard button {
   margin: 5px;
   padding: 10px;
-  font-size: 16px;
+  font-size: 30px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  min-width: 300px;
+}
+
+.modal-actions {
+  margin-top: 15px;
+  text-align: right;
 }
 
 @font-face {
