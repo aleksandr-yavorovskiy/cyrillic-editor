@@ -69,6 +69,9 @@ def compile_handler(request):
     left = to_measure_units(request.data.get("left"), "cm")
     right = to_measure_units(request.data.get("right"), "cm")
 
+    font_size = int(request.data.get("fontSize", 14))
+    line_height = int(font_size * 1.2)
+
     tex_content = f"""
 \\documentclass{{article}}
 \\usepackage{{fontspec}}
@@ -86,9 +89,10 @@ def compile_handler(request):
   right={right}
 }}
 
+\\pagestyle{{empty}}
+
 \\begin{{document}}
-\\noindent {processed_text}
-\\end{{document}}
+\\noindent {{\\fontsize{{{font_size}}}{{{line_height}}}\\selectfont {processed_text}}}\\end{{document}}
 """
 
     tex_file = "file.tex"

@@ -1,21 +1,33 @@
 <template>
   <div class="editor-page">
     <div class="toolbar">
-      <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" />
-      <button @click="$refs.fileInput.click()">Импортировать</button>
-
       <button @click="showMarginsModal = true">
         Настроить отступы
       </button>
 
-      <button @click="compileText">Компилировать</button>
-      <button @click="exportDocx">Экспорт в .docx</button>
       <!-- <button @click="testBackend">Проверить соединение с сервером</button> -->
+      <label>Шрифт:</label>
       <select v-model="selectedFont">
         <option v-for="font in fonts" :key="font" :value="font">
           {{ font }}
         </option>
       </select>
+
+      <div class="font-size-control">
+        <label>Размер шрифта:</label>
+        <select v-model.number="fontSize">
+          <option v-for="size in fontSizes" :key="size" :value="size">
+            {{ size }}
+          </option>
+        </select>
+      </div>
+
+      <div class="toolbar-right">
+        <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" />
+        <button @click="$refs.fileInput.click()">Импортировать</button>
+        <button @click="compileText">Компилировать PDF</button>
+        <button @click="exportDocx">Экспорт в .docx</button>
+      </div>
     </div>
 
     <div class="content">
@@ -23,7 +35,10 @@
         ref="textEditor"
         v-model="text"
         class="text-editor"
-        :style="{ fontFamily: selectedFont }"
+        :style="{ 
+          fontFamily: selectedFont,
+          fontSize: fontSize + 'pt'
+        }"
       />
 
       <div class="pdf-preview">
@@ -127,6 +142,7 @@ const dictionaries = {
 // TODO: add other fonts
 }
 
+// TODO: ponomar: 2de1 п instead of в
 function convertText(text, fromDict, toDict) {
   let result = ""
 
@@ -156,18 +172,18 @@ export default {
       pdfUrl: '',
       keyboard: [
         {
-          key: 'cyrillic',
-          label: 'Кириллица',
+          key: 'cyrillic', // TODO: change to churchslavonic?
+          label: 'Церковнославянский',
           symbols: cyrillicLetters
         },
         {
           key: 'slavic',
-          label: 'Доп. старославянские',
+          label: 'Доп. старославянский',
           symbols: slavicLetters
         },
         {
           key: 'uppercase',
-          label: 'Выносные',
+          label: 'Буквотитла',
           symbols: uppercaseSymbols
         },
         {
@@ -187,10 +203,16 @@ export default {
         'PonomarUnicode',
         'FlaviusUniversal',
         'FlavExpUniversal',
-        'menaionunicode', // TODO: menaion
-        'bukyvede' // TODO: BukyVede?
+        'MenaionUnicode', // TODO: menaion
+        'Bukyvede' // TODO: BukyVede?
       ],
       selectedFont: 'PonomarUnicode',
+      fontSizes: [
+        8, 9, 10, 11, 12, 14, 16, 18,
+        20, 22, 24, 26, 28, 32, 36,
+        40, 48, 56, 64, 72
+      ],
+      fontSize: 14,
       showMarginsModal: false,
       margins: {
         top: 2,
@@ -210,7 +232,7 @@ export default {
   },
   methods: {
     filterSymbols(symbols, tabKey) {
-      if (tabKey !== 'cyrillic') return symbols
+      if (tabKey !== 'cyrillic') return symbols // TODO: add slavic also
 
       if (this.showUppercase) return symbols
 
@@ -224,6 +246,7 @@ export default {
         },
         body: JSON.stringify({
           text: this.text,
+          fontSize: this.fontSize, // TODO: margins? font?
         }),
       })
         .then(response => response.blob())
@@ -287,6 +310,7 @@ export default {
         body: JSON.stringify({
           text: this.text,
           font: this.selectedFont,
+          fontSize: this.fontSize,
           top: this.margins.top,
           bottom: this.margins.bottom,
           left: this.margins.left,
@@ -356,8 +380,11 @@ export default {
   transform: scale(0.97);
 }
 
-.toolbar select {
-  min-width: 180px;
+.toolbar-right {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .content {
@@ -524,9 +551,21 @@ export default {
   cursor: pointer;
 }
 
+.font-size-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.font-size-control select {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
 @font-face {
   font-family: 'BukyVede';
-  src: url('/fonts/bukyvede.ttf'); /* TODO: BukyVede */
+  src: url('/fonts/BukyVede.ttf'); /* TODO: BukyVede */
 }
 
 @font-face {
@@ -541,7 +580,7 @@ export default {
 
 @font-face {
   font-family: 'MenaionUnicode';
-  src: url('/fonts/menaionunicode.otf'); /* TODO: MenaionUnicode */
+  src: url('/fonts/MenaionUnicode.otf'); /* TODO: MenaionUnicode */
 }
 
 @font-face {
