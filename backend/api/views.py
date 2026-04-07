@@ -14,6 +14,7 @@ import logging
 logger = logging.getLogger("api")
 
 
+# TODO: unify escape_latex & insert_soft_breaks (get O(n))
 def escape_latex(text):
     replacements = {
         "&": "\\&",
@@ -30,6 +31,19 @@ def escape_latex(text):
     return text.replace("\n", "\\\\\n")
 
 
+def insert_soft_breaks(text, threshold=15):
+    words = text.split(" ")
+    processed_words = []
+
+    for word in words:
+        if len(word) > threshold:
+            processed_words.append(f"\\seqsplit{{{word}}}")
+        else:
+            processed_words.append(word)
+
+    return " ".join(processed_words)
+
+
 def to_measure_units(margin_num, measure_units, default=2):
     try:
         return f"{margin_num}{measure_units}"
@@ -41,7 +55,7 @@ def to_measure_units(margin_num, measure_units, default=2):
 @api_view(['POST'])
 def compile_handler(request):
     text = request.data.get("text", "")
-    processed_text = escape_latex(text)
+    processed_text = insert_soft_breaks(escape_latex(text))
 
     font = request.data.get("font", "")
     font_path = settings.BASE_DIR / "fonts"
@@ -72,10 +86,8 @@ def compile_handler(request):
   right={right}
 }}
 
-\\hyphenation{{}}
-
 \\begin{{document}}
-\\noindent \\seqsplit{{{processed_text}}}
+\\noindent {processed_text}
 \\end{{document}}
 """
 
@@ -109,6 +121,7 @@ def compile_handler(request):
             return response
 
     except Exception as e:
+        logger.debug(f"Couldn't compile. Error: {str(e)}")
         return HttpResponse(f"Error: {str(e)}", status=500)
 
 

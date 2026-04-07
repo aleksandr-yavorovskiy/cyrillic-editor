@@ -325,52 +325,70 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background: #f7f8fa;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .toolbar {
   display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  background-color: #f0f0f0;
-}
-
-.margins {
-  display: flex;
   gap: 10px;
-}
-
-.margin-control {
-  display: flex;
   align-items: center;
-  gap: 5px;
+  padding: 10px 15px;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-.margin-control input {
-  width: 50px;
-  text-align: center;
-}
-
-.margin-control button {
-  width: 30px;
-  height: 30px;
+.toolbar button,
+.toolbar select {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar button:hover {
+  background: #f0f0f0;
+}
+
+.toolbar button:active {
+  transform: scale(0.97);
+}
+
+.toolbar select {
+  min-width: 180px;
 }
 
 .content {
   display: flex;
   flex: 1;
+  gap: 10px;
+  padding: 10px;
 }
 
 .text-editor {
   flex: 1;
-  padding: 10px;
-  font-size: 16px;
+  padding: 15px;
+  font-size: 18px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  outline: none;
+  resize: none;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.text-editor:focus {
+  border-color: #4a90e2;
 }
 
 .pdf-preview {
   flex: 1;
   padding: 10px;
-  border-left: 1px solid #ccc;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid #ddd;
   display: flex;
   flex-direction: column;
 }
@@ -378,34 +396,74 @@ export default {
 .pdf-preview iframe {
   flex: 1;
   width: 100%;
-  height: 100%;
   border: none;
 }
 
 .keyboard {
   display: flex;
   flex-direction: column;
-  height: 300px;
-  border-top: 1px solid #ccc;
+  height: 280px;
+  background: #ffffff;
+  border-top: 1px solid #ddd;
 }
 
 .keyboard-tabs {
   display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.keyboard-tabs button {
+  padding: 6px 10px;
+  border: none;
+  background: #f2f2f2;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.keyboard-tabs button:hover {
+  background: #e0e0e0;
+}
+
+.keyboard-tabs button.active {
+  background: #4a90e2;
+  color: white;
+}
+
+.checkbox {
+  margin-right: 10px;
+  font-size: 14px;
 }
 
 .keyboard-content {
   flex: 1;
   overflow-y: auto;
-  /* display: grid; */
-  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-  gap: 5px;
-  padding: 5px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+  gap: 6px;
+  padding: 8px;
 }
 
-.keyboard button {
-  margin: 5px;
+.keyboard-content button {
   padding: 10px;
-  font-size: 30px;
+  font-size: 22px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.keyboard-content button:hover {
+  background: #eaeaea;
+}
+
+.keyboard-content button:active {
+  transform: scale(0.92);
+  background: #dcdcdc;
 }
 
 .modal-overlay {
@@ -414,7 +472,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.35);
 
   display: flex;
   align-items: center;
@@ -424,13 +482,46 @@ export default {
 .modal {
   background: white;
   padding: 20px;
-  border-radius: 10px;
-  min-width: 300px;
+  border-radius: 12px;
+  min-width: 320px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal h3 {
+  margin-bottom: 15px;
+}
+
+.margins {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.margin-control {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.margin-control input {
+  margin-top: 4px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
 .modal-actions {
   margin-top: 15px;
   text-align: right;
+}
+
+.modal-actions button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #4a90e2;
+  color: white;
+  cursor: pointer;
 }
 
 @font-face {
@@ -443,7 +534,6 @@ export default {
   src: url('/fonts/FlaviusUniversal.ttf');
 }
 
-/* TODO: add flavexp */
 @font-face {
   font-family: 'FlavExpUniversal';
   src: url('/fonts/FlavExpUniversal.ttf');
