@@ -5,6 +5,8 @@ services:
       - "8001:8001"
     volumes:
       - ./backend:/app
+    env_file:
+      - ./backend/.env
 
   frontend:
     build: ./frontend
@@ -14,6 +16,6 @@ services:
       - ./frontend:/app
       - /app/node_modules
     env_file:
-    - ./frontend/.env.docker
+    - ./frontend/.env
     depends_on:
       - backend
