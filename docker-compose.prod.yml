@@ -11,11 +11,8 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    command: npm run dev
+      - "4173:4173"
+    command: npm run preview -- --host 0.0.0.0
     env_file:
       - ./frontend/.env
     depends_on:
