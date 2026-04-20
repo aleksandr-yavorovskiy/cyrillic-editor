@@ -9,10 +9,15 @@ services:
       - ./backend/.env
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     ports:
-      - "4173:4173"
-    command: npm run preview -- --host 0.0.0.0
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
     env_file:
       - ./frontend/.env
     depends_on:
