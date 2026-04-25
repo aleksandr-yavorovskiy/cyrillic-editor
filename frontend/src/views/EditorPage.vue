@@ -5,7 +5,16 @@
         Настроить отступы
       </button>
 
-      <!-- <button @click="testBackend">Проверить соединение с сервером</button> -->
+      <button @click="testBackend">Проверить соединение с сервером</button>
+    
+      <!-- TODO: Экспортировать в PDF -->
+      <!-- TODO: ДОбавить хэлпер инструкцию (ctrl s - предвар просмотрет и тд) -->
+
+      <!-- TODO: добавить возможность добавления шрифта вместе с маппингами символов 
+       маппинги делать не jsonами а прям квадратиками напротив букв, и после этого уже будет конверт в json 
+       1. валидировать шрифт
+       2. -->
+
       <label>Шрифт:</label>
       <select v-model="selectedFont">
         <option v-for="font in fonts" :key="font" :value="font">
@@ -133,6 +142,8 @@ import punctuationSymbols from '@/keyboard/punctuation.json'
 
 
 const API_URL = import.meta.env.VITE_API_URL
+
+// TODO: компилировать автоматически по ctrl s
 
 const dictionaries = {
   PonomarUnicode: ponomar,
