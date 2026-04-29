@@ -30,6 +30,8 @@
       </div>
 
       <div class="toolbar-right">
+        <button @click="convertToGlagolitic">Конвертировать в глаголицу</button>
+        <button @click="convertToCyrillic">Конвертировать в кириллицу</button>
         <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" />
         <button @click="$refs.fileInput.click()">Импортировать</button>
         <button @click="compileText">Компилировать PDF</button>
@@ -134,6 +136,7 @@ import menaion from '@/dictionaries/MenaionUnicode.json'
 // TODO: add other fonts
 
 import cyrillicLetters from '@/keyboard/cyrillic.json'
+import glagolitic from '@/dictionaries/glagolitic.json'
 import uppercaseSymbols from '@/keyboard/uppercase.json'
 import diacriticSymbols from '@/keyboard/diacritic.json'
 import punctuationSymbols from '@/keyboard/punctuation.json'
@@ -171,6 +174,14 @@ function convertText(text, fromDict, toDict) {
     }
   }
 
+  return result
+}
+
+function convertDirect(text, mapping) {
+  let result = ""
+  for (let char of text) {
+    result += (char in mapping) ? mapping[char] : char
+  }
   return result
 }
 
@@ -241,6 +252,12 @@ export default {
       if (this.showUppercase) return symbols
 
       return symbols.filter(s => s !== s.toUpperCase())
+    },
+    convertToGlagolitic() {
+      this.text = convertDirect(this.text, glagolitic.CyrillicToGlagolitic)
+    },
+    convertToCyrillic() {
+      this.text = convertDirect(this.text, glagolitic.GlagoliticToCyrillic)
     },
     exportDocx() {
       fetch(`${API_URL}/api/export-docx/`, {
