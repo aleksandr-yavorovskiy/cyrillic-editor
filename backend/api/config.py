@@ -12,7 +12,7 @@ class AppConfig:
     LATEX_LINE_HEIGHT_MULTIPLIER: float = 1.2
     MAX_FILE_SIZE_MB: int = 50
     SUPPORTED_IMPORT_EXTENSIONS: tuple = (".txt", ".docx", ".pdf")
-    SUPPORTED_EXPORT_EXTENSIONS: tuple = (".docx",)
+    SUPPORTED_EXPORT_EXTENSIONS: tuple = (".docx", ".pdf")
 
 
 config = AppConfig()

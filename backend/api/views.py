@@ -49,7 +49,7 @@ def import_handler(request):
 
 
 @api_view(["POST"])
-def export_handler(request):
+def export_handler(request): # TODO: rename to export_docx
     text = request.data.get("text", "")
     format = request.data.get("format", ".docx")
 
@@ -66,6 +66,31 @@ def export_handler(request):
             buffer.read(),
             content_type=content_type,
             headers={"Content-Disposition": f'attachment; filename="document{format}"'},
+        )
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+@api_view(["POST"])
+def export_pdf_handler(request):
+    text = request.data.get("text", "")
+    options = CompileOptions(
+        font=request.data.get("font", ""),
+        fontSize=request.data.get("fontSize", 14),
+        top=request.data.get("top", 2),
+        bottom=request.data.get("bottom", 2),
+        left=request.data.get("left", 2),
+        right=request.data.get("right", 2),
+    )
+
+    try:
+        pdf_bytes = CompilationService.get_instance().compile(text, options)
+        pdf_bytes.seek(0)
+
+        return HttpResponse(
+            pdf_bytes.read(),
+            content_type="application/pdf",
+            headers={"Content-Disposition": 'attachment; filename="document.pdf"'},
         )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)

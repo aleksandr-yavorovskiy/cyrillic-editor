@@ -6,8 +6,6 @@
       </button>
 
       <button @click="testBackend">Проверить соединение с сервером</button>
-    
-      <!-- TODO: Экспортировать в PDF -->
       <!-- TODO: ДОбавить хэлпер инструкцию (ctrl s - предвар просмотрет и тд) -->
 
       <!-- TODO: добавить возможность добавления шрифта вместе с маппингами символов 
@@ -35,6 +33,7 @@
         <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" />
         <button @click="$refs.fileInput.click()">Импортировать</button>
         <button @click="compileText">Компилировать PDF</button>
+        <button @click="exportPdf">Экспортировать в PDF</button>
         <button @click="exportDocx">Экспорт в .docx</button>
       </div>
     </div>
@@ -267,6 +266,38 @@ export default {
           const a = document.createElement('a')
           a.href = url
           a.download = 'document.docx'
+          a.click()
+
+          window.URL.revokeObjectURL(url)
+        })
+        .catch(err => {
+          console.error(err)
+          alert('Ошибка экспорта.')
+        })
+    },
+    exportPdf() {
+      fetch(`${API_URL}/api/export-pdf/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: this.text,
+          font: this.selectedFont,
+          fontSize: this.fontSize,
+          top: this.margins.top,
+          bottom: this.margins.bottom,
+          left: this.margins.left,
+          right: this.margins.right,
+        }),
+      })
+        .then(response => response.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob)
+
+          const a = document.createElement('a')
+          a.href = url
+          a.download = 'document.pdf'
           a.click()
 
           window.URL.revokeObjectURL(url)
