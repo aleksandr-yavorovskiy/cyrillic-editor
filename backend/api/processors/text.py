@@ -1,4 +1,3 @@
-import re
 import logging
 
 from api.core.base import BaseProcessor
@@ -24,7 +23,7 @@ class LatexEscaper(BaseProcessor):
         result = text
         for char, replacement in self.REPLACEMENTS.items():
             result = result.replace(char, replacement)
-        return result.replace("\n", r"\\n")
+        return result.replace("\n", r"\\")
 
     @staticmethod
     def validate_text(text: str) -> None:
@@ -46,14 +45,6 @@ class SoftBreaksProcessor(BaseProcessor):
         return " ".join(processed)
 
 
-class WhitespaceNormalizer(BaseProcessor):
-    PATTERN = re.compile(r"\s+")
-
-    def process(self, text: str) -> str:
-        self.validate_text(text)
-        return self.PATTERN.sub(" ", text).strip()
-
-
 class ProcessingPipeline:
     def __init__(self, processors: list[BaseProcessor] = None):
         self._processors = processors or []
@@ -72,7 +63,6 @@ class ProcessingPipeline:
 def create_default_pipeline() -> ProcessingPipeline:
     return ProcessingPipeline(
         [
-            WhitespaceNormalizer(),
             LatexEscaper(),
             SoftBreaksProcessor(),
         ]
