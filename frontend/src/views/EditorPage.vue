@@ -134,7 +134,6 @@ import menaion from '@/dictionaries/MenaionUnicode.json'
 // TODO: add other fonts
 
 import cyrillicLetters from '@/keyboard/cyrillic.json'
-import slavicLetters from '@/keyboard/slavic.json'
 import uppercaseSymbols from '@/keyboard/uppercase.json'
 import diacriticSymbols from '@/keyboard/diacritic.json'
 import punctuationSymbols from '@/keyboard/punctuation.json'
@@ -182,14 +181,9 @@ export default {
       pdfUrl: '',
       keyboard: [
         {
-          key: 'cyrillic', // TODO: change to churchslavonic?
-          label: 'Церковнославянский',
+          key: 'cyrillic',
+          label: 'Кириллица',
           symbols: cyrillicLetters
-        },
-        {
-          key: 'slavic',
-          label: 'Доп. старославянский',
-          symbols: slavicLetters
         },
         {
           key: 'uppercase',
@@ -242,7 +236,7 @@ export default {
   },
   methods: {
     filterSymbols(symbols, tabKey) {
-      if (tabKey !== 'cyrillic') return symbols // TODO: add slavic also
+      if (tabKey !== 'cyrillic') return symbols
 
       if (this.showUppercase) return symbols
 
