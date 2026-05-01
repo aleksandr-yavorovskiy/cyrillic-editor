@@ -1,12 +1,10 @@
 <template>
   <div class="editor-page">
     <div class="toolbar">
-      <button @click="showMarginsModal = true">
-        Настроить отступы
-      </button>
 
-      <button @click="testBackend">Проверить соединение с сервером</button>
-      <!-- TODO: ДОбавить хэлпер инструкцию (ctrl s - предвар просмотрет и тд) -->
+      <!-- <button @click="testBackend">Проверить соединение с сервером</button> -->
+      <button @click="showHelpModal = true" title="Справка (F1)">Справка</button>
+      <button @click="showMarginsModal = true">Настроить отступы</button>
 
       <!-- TODO: добавить возможность добавления шрифта вместе с маппингами символов 
        маппинги делать не jsonами а прям квадратиками напротив букв, и после этого уже будет конверт в json 
@@ -33,9 +31,9 @@
         <button @click="convertToGlagolitic">Конвертировать в глаголицу</button>
         <button @click="convertToCyrillic">Конвертировать в кириллицу</button>
         <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" />
-        <button @click="$refs.fileInput.click()">Импортировать</button>
-        <button @click="compileText">Компилировать PDF</button>
-        <button @click="exportPdf">Экспортировать в PDF</button>
+        <button @click="$refs.fileInput.click()">Импортировать...</button>
+        <button @click="compileText">Предпросмотр PDF</button>
+        <button @click="exportPdf">Экспорт в PDF</button>
         <button @click="exportDocx">Экспорт в .docx</button>
       </div>
     </div>
@@ -123,6 +121,64 @@
 
       <div class="modal-actions">
         <button @click="showMarginsModal = false">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    v-if="showHelpModal"
+    class="modal-overlay"
+    @click.self="showHelpModal = false"
+  >
+    <div class="modal help-modal">
+      <h3>Справка по использованию редактора</h3>
+
+      <div class="help-section">
+        <h4>Принцип работы:</h4>
+        <ul>
+          <li>Текст набирается в левой половине экрана, предпросмотр PDF осуществляется в правой половине.</li>
+          <li>Для настройки, импорта и экспорта используется верхнее меню с кнопками.</li>
+          <li>Для набора специальных символов используется экранная клавиатура, расположенная в нижней части экрана.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>Кнопки панели инструментов:</h4>
+        <ul>
+          <li><strong>Настроить отступы</strong> — открывает окно для настройки полей страницы (сверху, снизу, слева, справа) в сантиметрах.</li>
+          <li><strong>Шрифт</strong> — выбор шрифта для отображения текста (PonomarUnicode, BukyVede и др.).</li>
+          <li><strong>Размер шрифта</strong> — выбор размера шрифта от 8 до 72 pt.</li>
+          <li><strong>Конвертировать в глаголицу</strong> — преобразует набранный кириллический текст в глаголицу.</li>
+          <li><strong>Конвертировать в кириллицу</strong> — преобразует набранный текст на глаголице в кириллицу.</li>
+          <li><strong>Импортировать</strong> — загрузка текста из файла (.txt, .pdf, .docx).</li>
+          <li><strong>Предпросмотр PDF</strong> — компилирует текст и показывает PDF-предпросмотр справа.</li>
+          <li><strong>Экспортировать в PDF</strong> — скачивает PDF-файл с набранным текстом.</li>
+          <li><strong>Экспорт в .docx</strong> — скачивает набранный текст в формате Word.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>Экранная клавиатура:</h4>
+        <ul>
+          <li><strong>Заглавные буквы</strong> — галочка для отображения/скрытия заглавных букв в кириллице.</li>
+          <li><strong>Кириллица</strong> — вкладка с буквами кириллицы (в т.ч. старославянский, церковнославянский).</li>
+          <li><strong>Буквотитла</strong> — вкладка с надстрочными буквами (буквотитла).</li>
+          <li><strong>Диакритика</strong> — вкладка с диакритическими знаками.</li>
+          <li><strong>Пунктуация</strong> — вкладка со знаками препинания.</li>
+          <li>Нажмите на любой символ на клавиатуре, чтобы вставить его в текст в позиции курсора.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>Горячие клавиши:</h4>
+        <ul>
+          <li><strong>F1</strong> — открыть справку.</li>
+          <li><strong>Esc</strong> — закрыть справку.</li>
+        </ul>
+      </div>
+
+      <div class="modal-actions">
+        <button @click="showHelpModal = false">Закрыть</button>
       </div>
     </div>
   </div>
@@ -228,8 +284,9 @@ export default {
         40, 48, 56, 64, 72
       ],
       fontSize: 14,
-      showMarginsModal: false,
-      margins: {
+       showMarginsModal: false,
+       showHelpModal: false,
+       margins: {
         top: 2,
         bottom: 2,
         left: 2,
@@ -245,7 +302,21 @@ export default {
       this.text = convertText(this.text, fromDict, toDict)
     }
   },
+  mounted() {
+    document.addEventListener('keydown', this.handleKeydown)
+  },
+  beforeUnmount() {
+    document.removeEventListener('keydown', this.handleKeydown)
+  },
   methods: {
+    handleKeydown(e) {
+      if (e.key === 'F1') {
+        e.preventDefault()
+        this.showHelpModal = true
+      } else if (e.key === 'Escape' && this.showHelpModal) {
+        this.showHelpModal = false
+      }
+    },
     filterSymbols(symbols, tabKey) {
       if (tabKey !== 'cyrillic') return symbols
 
@@ -639,6 +710,38 @@ export default {
 @font-face {
   font-family: 'PonomarUnicode';
   src: url('/fonts/PonomarUnicode.otf');
+}
+
+.help-modal {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.help-modal h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.help-modal h4 {
+  margin: 15px 0 10px 0;
+  color: #4a90e2;
+  font-size: 16px;
+}
+
+.help-section {
+  margin-bottom: 15px;
+}
+
+.help-section ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.help-section li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
 </style>
