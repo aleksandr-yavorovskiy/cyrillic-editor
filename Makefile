@@ -1,4 +1,4 @@
-.PHONY: build build-dev up up-dev lint lint-backend lint-frontend format test-backend deploy
+.PHONY: build build-dev up up-dev deps deps-backend deps-frontend lint lint-backend lint-frontend format test-backend deploy
 
 build:
 	docker compose build
@@ -15,15 +15,23 @@ up-dev:
 lint: lint-backend lint-frontend
 
 lint-backend:
-	.venv/bin/ruff check backend/.
+	ruff check backend/.
 
 lint-frontend:
 	cd frontend && npm run lint
+
+deps: deps-backend deps-frontend
+
+deps-backend:
+	pip install -r backend/requirements.txt
+
+deps-frontend:
+	cd frontend && npm ci
 
 format:
 	cd frontend && npm run format
 
 test-backend:
-	.venv/bin/python backend/manage.py test
+	cd backend && python -m pytest api/tests/ -v
 
 deploy: build up

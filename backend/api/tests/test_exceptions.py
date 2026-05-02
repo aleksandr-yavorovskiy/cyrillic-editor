@@ -1,4 +1,3 @@
-import pytest
 from api.core.exceptions import APIError
 
 
