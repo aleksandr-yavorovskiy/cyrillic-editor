@@ -4,3 +4,5 @@ frontend/.eslintcache
 __pycache__/
 .env*
 *.log
+.coverage
+htmlcov/
