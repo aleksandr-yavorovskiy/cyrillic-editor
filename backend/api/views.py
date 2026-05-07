@@ -4,6 +4,10 @@ from io import BytesIO
 
 from api.services import CompilationService, ImportService, ExportService
 from api.services import CompileOptions
+from api.config import config
+
+
+MAX_TEXT_LENGTH = config.MAX_FILE_SIZE_MB * 1024 * 1024
 
 
 @api_view(["GET"])
@@ -14,6 +18,8 @@ def ping(request):
 @api_view(["POST"])
 def compile_handler(request):
     text = request.data.get("text", "")
+    if len(text.encode("utf-8")) > MAX_TEXT_LENGTH:
+        return HttpResponse(f"Text exceeds maximum size of {config.MAX_FILE_SIZE_MB}MB", status=413)
     options = CompileOptions(
         font=request.data.get("font", ""),
         fontSize=request.data.get("fontSize", 14),
@@ -40,6 +46,9 @@ def import_handler(request):
     if not file:
         return JsonResponse({"error": "No file uploaded"}, status=400)
 
+    if file.size > MAX_TEXT_LENGTH:
+        return JsonResponse({"error": f"File exceeds maximum size of {config.MAX_FILE_SIZE_MB}MB"}, status=413)
+
     try:
         file_data = BytesIO(file.read())
         text = ImportService.get_instance().import_file(file_data, file.name)
@@ -49,23 +58,21 @@ def import_handler(request):
 
 
 @api_view(["POST"])
-def export_handler(request): # TODO: rename to export_docx
+def export_docx_handler(request):
     text = request.data.get("text", "")
-    format = request.data.get("format", ".docx")
+    if len(text.encode("utf-8")) > MAX_TEXT_LENGTH:
+        return HttpResponse(f"Text exceeds maximum size of {config.MAX_FILE_SIZE_MB}MB", status=413)
 
     try:
-        buffer = ExportService.get_instance().export(text, format)
+        buffer = ExportService.get_instance().export(text, ".docx")
         buffer.seek(0)
 
-        content_types = {
-            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        }
-        content_type = content_types.get(format, "application/octet-stream")
+        content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
         return HttpResponse(
             buffer.read(),
             content_type=content_type,
-            headers={"Content-Disposition": f'attachment; filename="document{format}"'},
+            headers={"Content-Disposition": 'attachment; filename="document.docx"'},
         )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
@@ -74,6 +81,8 @@ def export_handler(request): # TODO: rename to export_docx
 @api_view(["POST"])
 def export_pdf_handler(request):
     text = request.data.get("text", "")
+    if len(text.encode("utf-8")) > MAX_TEXT_LENGTH:
+        return HttpResponse(f"Text exceeds maximum size of {config.MAX_FILE_SIZE_MB}MB", status=413)
     options = CompileOptions(
         font=request.data.get("font", ""),
         fontSize=request.data.get("fontSize", 14),

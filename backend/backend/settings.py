@@ -12,19 +12,13 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env file if exists
-env_path = BASE_DIR / '.env'
-if env_path.exists():
-    with open(env_path) as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#'):
-                key, _, value = line.partition('=')
-                os.environ[key.strip()] = value.strip()
+load_dotenv(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -33,10 +27,9 @@ if env_path.exists():
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-test-key-for-ci-only")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# TODO: change to False
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
 
 
 # Application definition

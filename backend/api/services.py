@@ -38,16 +38,17 @@ class CompilationService(BaseService):
     def __new__(cls, compiler=None, builder=None, pipeline=None):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._compiler = compiler or LatexCompiler()
-            cls._instance._builder = builder or LatexBuilder()
-            cls._instance._pipeline = pipeline or create_default_pipeline()
+            cls._instance._initialized = False
         return cls._instance
 
     def __init__(self, compiler=None, builder=None, pipeline=None):
+        if self._initialized:
+            return
         super().__init__()
         self._compiler = compiler or LatexCompiler()
         self._builder = builder or LatexBuilder()
         self._pipeline = pipeline or create_default_pipeline()
+        self._initialized = True
 
     def compile(self, text: str, options: CompileOptions) -> BytesIO:
         self.logger.info(f"Compiling text ({len(text)} chars)")
@@ -72,12 +73,15 @@ class ImportService(BaseService):
     def __new__(cls, registry: ConverterRegistry = None):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._registry = registry or ConverterRegistry()
+            cls._instance._initialized = False
         return cls._instance
 
     def __init__(self, registry: ConverterRegistry = None):
+        if self._initialized:
+            return
         super().__init__()
         self._registry = registry or ConverterRegistry()
+        self._initialized = True
 
     def import_file(self, file_data: BytesIO, filename: str) -> str:
         self.logger.info(f"Importing file: {filename}")
@@ -105,12 +109,15 @@ class ExportService(BaseService):
     def __new__(cls, registry: ConverterRegistry = None):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._registry = registry or ConverterRegistry()
+            cls._instance._initialized = False
         return cls._instance
 
     def __init__(self, registry: ConverterRegistry = None):
+        if self._initialized:
+            return
         super().__init__()
         self._registry = registry or ConverterRegistry()
+        self._initialized = True
 
     def export(self, text: str, format: str = ".docx") -> BytesIO:
         self.logger.info(f"Exporting to {format}")

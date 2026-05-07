@@ -9,6 +9,7 @@ logger = logging.getLogger("api")
 
 class LatexEscaper(BaseProcessor):
     REPLACEMENTS = {
+        "\\": r"\textbackslash{}",
         "&": r"\&",
         "%": r"\%",
         "$": r"\$",
@@ -16,6 +17,8 @@ class LatexEscaper(BaseProcessor):
         "_": r"\_",
         "{": r"\{",
         "}": r"\}",
+        "~": r"\textasciitilde{}",
+        "^": r"\textasciicircum{}",
     }
 
     def process(self, text: str) -> str:

@@ -1,6 +1,4 @@
 import logging
-from typing import TypeVar, Callable
-from functools import wraps
 
 logger = logging.getLogger("api")
 
@@ -33,36 +31,3 @@ class CompilationError(APIError):
 
 class FileProcessingError(APIError):
     status_code = 500
-
-
-T = TypeVar("T")
-
-
-def handle_errors(func: Callable[..., T]) -> Callable[..., T | dict]:
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except ValidationError as e:
-            logger.warning(f"Validation error: {e.message}")
-            return {"error": e.message}
-        except UnsupportedFormatError as e:
-            logger.warning(f"Unsupported format: {e.message}")
-            return {"error": e.message}
-        except NotFoundError as e:
-            logger.warning(f"Not found: {e.message}")
-            return {"error": e.message}
-        except FileProcessingError as e:
-            logger.error(f"File processing error: {e.message}")
-            return {"error": e.message}
-        except CompilationError as e:
-            logger.error(f"Compilation error: {e.message}")
-            return {"error": e.message}
-        except APIError as e:
-            logger.error(f"API error: {e.message}")
-            return {"error": e.message}
-        except Exception as e:
-            logger.exception(f"Unexpected error: {e}")
-            return {"error": "Internal server error"}
-
-    return wrapper

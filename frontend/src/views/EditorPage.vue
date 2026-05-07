@@ -6,11 +6,6 @@
       <button @click="showHelpModal = true" title="Справка (F1)">Справка</button>
       <button @click="showMarginsModal = true">Настроить отступы</button>
 
-      <!-- TODO: добавить возможность добавления шрифта вместе с маппингами символов 
-       маппинги делать не jsonами а прям квадратиками напротив букв, и после этого уже будет конверт в json 
-       1. валидировать шрифт
-       2. -->
-
       <label>Шрифт:</label>
       <select v-model="selectedFont">
         <option v-for="font in fonts" :key="font" :value="font">

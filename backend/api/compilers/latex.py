@@ -29,12 +29,17 @@ class LatexCompiler(BaseCompiler):
             except OSError as e:
                 raise CompilationError(f"Failed to write TeX source: {e}")
 
-            result = subprocess.run(
-                ["xelatex", "-interaction=nonstopmode", "file.tex"],
-                cwd=tmpdir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
+            try:
+                result = subprocess.run(
+                    ["xelatex", "-interaction=nonstopmode", "file.tex"],
+                    cwd=tmpdir,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=config.XELATEX_TIMEOUT_SEC,
+                )
+            except subprocess.TimeoutExpired:
+                logger.error(f"LaTeX compilation timed out after {config.XELATEX_TIMEOUT_SEC}s")
+                raise CompilationError(f"LaTeX compilation timed out after {config.XELATEX_TIMEOUT_SEC}s")
 
             if result.returncode != 0:
                 error_msg = (
