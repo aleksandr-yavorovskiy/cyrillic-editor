@@ -192,6 +192,7 @@ import menaion from '@/dictionaries/MenaionUnicode.json'
 // TODO: add other fonts
 
 import cyrillicLetters from '@/keyboard/cyrillic.json'
+import glagoliticLetters from '@/keyboard/glagolitic.json'
 import glagolitic from '@/dictionaries/glagolitic.json'
 import uppercaseSymbols from '@/keyboard/uppercase.json'
 import diacriticSymbols from '@/keyboard/diacritic.json'
@@ -266,6 +267,11 @@ export default {
           key: 'punctuation',
           label: 'Пунктуация',
           symbols: punctuationSymbols
+        },
+        {
+          key: 'glagolitic',
+          label: 'Глаголица',
+          symbols: glagoliticLetters
         },
       ],
       activeTab: 'cyrillic',
