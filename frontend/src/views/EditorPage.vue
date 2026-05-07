@@ -1,8 +1,6 @@
 <template>
   <div class="editor-page">
     <div class="toolbar">
-
-      <!-- <button @click="testBackend">Проверить соединение с сервером</button> -->
       <button @click="showHelpModal = true" title="Справка (F1)">Справка</button>
       <button @click="showMarginsModal = true">Настроить отступы</button>
 
@@ -26,10 +24,16 @@
         <button @click="convertToGlagolitic">Конвертировать в глаголицу</button>
         <button @click="convertToCyrillic">Конвертировать в кириллицу</button>
         <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" />
-        <button @click="$refs.fileInput.click()">Импортировать...</button>
-        <button @click="compileText">Предпросмотр PDF</button>
-        <button @click="exportPdf">Экспорт в PDF</button>
-        <button @click="exportDocx">Экспорт в .docx</button>
+        <button @click="triggerFileImport">Импортировать...</button>
+        <button @click="compileText" :disabled="isCompiling">
+          {{ isCompiling ? 'Компиляция...' : 'Предпросмотр PDF' }}
+        </button>
+        <button @click="exportPdf" :disabled="isExporting">
+          {{ isExporting ? 'Экспорт...' : 'Экспорт в PDF' }}
+        </button>
+        <button @click="exportDocx" :disabled="isExporting">
+          {{ isExporting ? 'Экспорт...' : 'Экспорт в .docx' }}
+        </button>
       </div>
     </div>
 
@@ -42,6 +46,7 @@
           fontFamily: selectedFont,
           fontSize: fontSize + 'pt'
         }"
+        @keydown.ctrl.s.prevent="compileText"
       />
 
       <div class="pdf-preview">
@@ -67,13 +72,8 @@
       </div>
 
       <div class="keyboard-content">
-
-        <!-- TODO: use keyboard dictionary instead -->
         <button
-          v-for="symbol in filterSymbols(
-            keyboard.find(g => g.key === activeTab).symbols,
-            activeTab
-            )"
+          v-for="symbol in activeSymbols"
           :key="symbol"
           @click="insertSymbol(symbol)"
           :style="{ fontFamily: selectedFont }"
@@ -81,6 +81,10 @@
           {{ symbol }}
         </button>
       </div>
+    </div>
+
+    <div v-if="errorMessage" class="error-toast" @click="errorMessage = ''">
+      {{ errorMessage }}
     </div>
   </div>
 
@@ -94,17 +98,7 @@
 
       <div class="margins">
         <div v-for="(value, key) in margins" :key="key" class="margin-control">
-          <label>
-            {{
-              {
-                top: 'Сверху',
-                bottom: 'Снизу',
-                left: 'Слева',
-                right: 'Справа'
-              }[key]
-            }}
-          </label>
-
+          <label>{{ marginLabels[key] }}</label>
           <input
             type="number"
             step="0.5"
@@ -160,6 +154,7 @@
           <li><strong>Буквотитла</strong> — вкладка с надстрочными буквами (буквотитла).</li>
           <li><strong>Диакритика</strong> — вкладка с диакритическими знаками.</li>
           <li><strong>Пунктуация</strong> — вкладка со знаками препинания.</li>
+          <li><strong>Глаголица</strong> — вкладка с глаголическими буквами.</li>
           <li>Нажмите на любой символ на клавиатуре, чтобы вставить его в текст в позиции курсора.</li>
         </ul>
       </div>
@@ -169,6 +164,7 @@
         <ul>
           <li><strong>F1</strong> — открыть справку.</li>
           <li><strong>Esc</strong> — закрыть справку.</li>
+          <li><strong>Ctrl+S</strong> — скомпилировать и показать предпросмотр PDF.</li>
         </ul>
       </div>
 
@@ -184,7 +180,7 @@ import ponomar from '@/dictionaries/PonomarUnicode.json'
 import bukyvede from '@/dictionaries/BukyVede.json'
 import flavius from '@/dictionaries/FlaviusUniversal.json'
 import menaion from '@/dictionaries/MenaionUnicode.json'
-// TODO: add other fonts
+// TODO: add flavexp
 
 import cyrillicLetters from '@/keyboard/cyrillic.json'
 import glagoliticLetters from '@/keyboard/glagolitic.json'
@@ -193,48 +189,14 @@ import uppercaseSymbols from '@/keyboard/uppercase.json'
 import diacriticSymbols from '@/keyboard/diacritic.json'
 import punctuationSymbols from '@/keyboard/punctuation.json'
 
-
-const API_URL = import.meta.env.VITE_API_URL
-
-// TODO: компилировать автоматически по ctrl s
+import { compileText, exportPdf, exportDocx, importFile, downloadPdfBlob, downloadDocxBlob } from '@/api/editor'
+import { convertText, convertDirect } from '@/utils/conversions'
 
 const dictionaries = {
   PonomarUnicode: ponomar,
   BukyVede: bukyvede,
   FlaviusUniversal: flavius,
   MenaionUnicode: menaion
-// TODO: add other fonts
-}
-
-// TODO: ponomar: 2de1 п instead of в
-function convertText(text, fromDict, toDict) {
-  let result = ""
-
-  for (let char of text) {
-    let unicodeChar = char
-
-    // old font -> unicode
-    if (fromDict && char in fromDict.FontToUnicode) {
-      unicodeChar = fromDict.FontToUnicode[char]
-    }
-
-    // unicode -> new font
-    if (toDict && unicodeChar in toDict.UnicodeToFont) {
-      result += toDict.UnicodeToFont[unicodeChar]
-    } else {
-      result += unicodeChar
-    }
-  }
-
-  return result
-}
-
-function convertDirect(text, mapping) {
-  let result = ""
-  for (let char of text) {
-    result += (char in mapping) ? mapping[char] : char
-  }
-  return result
 }
 
 export default {
@@ -243,31 +205,11 @@ export default {
       text: '',
       pdfUrl: '',
       keyboard: [
-        {
-          key: 'cyrillic',
-          label: 'Кириллица',
-          symbols: cyrillicLetters
-        },
-        {
-          key: 'uppercase',
-          label: 'Буквотитла',
-          symbols: uppercaseSymbols
-        },
-        {
-          key: 'superscript',
-          label: 'Диакритика',
-          symbols: diacriticSymbols
-        },
-        {
-          key: 'punctuation',
-          label: 'Пунктуация',
-          symbols: punctuationSymbols
-        },
-        {
-          key: 'glagolitic',
-          label: 'Глаголица',
-          symbols: glagoliticLetters
-        },
+        { key: 'cyrillic', label: 'Кириллица', symbols: cyrillicLetters },
+        { key: 'uppercase', label: 'Буквотитла', symbols: uppercaseSymbols },
+        { key: 'superscript', label: 'Диакритика', symbols: diacriticSymbols },
+        { key: 'punctuation', label: 'Пунктуация', symbols: punctuationSymbols },
+        { key: 'glagolitic', label: 'Глаголица', symbols: glagoliticLetters },
       ],
       activeTab: 'cyrillic',
       showUppercase: true,
@@ -275,8 +217,8 @@ export default {
         'PonomarUnicode',
         'FlaviusUniversal',
         'FlavExpUniversal',
-        'MenaionUnicode', // TODO: menaion
-        'Bukyvede' // TODO: BukyVede?
+        'MenaionUnicode',
+        'Bukyvede'
       ],
       selectedFont: 'PonomarUnicode',
       fontSizes: [
@@ -285,22 +227,48 @@ export default {
         40, 48, 56, 64, 72
       ],
       fontSize: 14,
-       showMarginsModal: false,
-       showHelpModal: false,
-       margins: {
+      showMarginsModal: false,
+      showHelpModal: false,
+      errorMessage: '',
+      isCompiling: false,
+      isExporting: false,
+      margins: {
         top: 2,
         bottom: 2,
         left: 2,
         right: 2
       },
-    };
+    }
+  },
+  computed: {
+    marginLabels() {
+      return {
+        top: 'Сверху',
+        bottom: 'Снизу',
+        left: 'Слева',
+        right: 'Справа'
+      }
+    },
+    activeKeyboardGroup() {
+      return this.keyboard.find(g => g.key === this.activeTab)
+    },
+    activeSymbols() {
+      if (!this.activeKeyboardGroup) return []
+
+      const symbols = this.activeKeyboardGroup.symbols
+      if (this.activeTab !== 'cyrillic' || this.showUppercase) return symbols
+
+      return symbols.filter(s => s !== s.toUpperCase())
+    }
   },
   watch: {
     selectedFont(newFont, oldFont) {
       const fromDict = dictionaries[oldFont]
       const toDict = dictionaries[newFont]
 
-      this.text = convertText(this.text, fromDict, toDict)
+      if (fromDict && toDict) {
+        this.text = convertText(this.text, fromDict, toDict)
+      }
     }
   },
   mounted() {
@@ -314,16 +282,64 @@ export default {
       if (e.key === 'F1') {
         e.preventDefault()
         this.showHelpModal = true
-      } else if (e.key === 'Escape' && this.showHelpModal) {
+      } else if (e.key === 'Escape') {
         this.showHelpModal = false
+        this.showMarginsModal = false
+        this.errorMessage = ''
       }
     },
-    filterSymbols(symbols, tabKey) {
-      if (tabKey !== 'cyrillic') return symbols
+    triggerFileImport() {
+      this.$refs.fileInput.value = ''
+      this.$refs.fileInput.click()
+    },
+    async handleFileUpload(event) {
+      const file = event.target.files[0]
+      if (!file) return
 
-      if (this.showUppercase) return symbols
-
-      return symbols.filter(s => s !== s.toUpperCase())
+      try {
+        this.text = await importFile(file)
+      } catch (error) {
+        this.errorMessage = error.message || 'Ошибка загрузки файла'
+      }
+    },
+    async compileText() {
+      this.isCompiling = true
+      this.errorMessage = ''
+      try {
+        const blob = await compileText(this.text, this.selectedFont, this.fontSize, this.margins)
+        if (this.pdfUrl) {
+          URL.revokeObjectURL(this.pdfUrl)
+        }
+        this.pdfUrl = URL.createObjectURL(blob)
+      } catch (error) {
+        this.errorMessage = 'Ошибка компиляции: ' + error.message
+      } finally {
+        this.isCompiling = false
+      }
+    },
+    async exportPdf() {
+      this.isExporting = true
+      this.errorMessage = ''
+      try {
+        const blob = await exportPdf(this.text, this.selectedFont, this.fontSize, this.margins)
+        downloadPdfBlob(blob)
+      } catch (error) {
+        this.errorMessage = 'Ошибка экспорта PDF: ' + error.message
+      } finally {
+        this.isExporting = false
+      }
+    },
+    async exportDocx() {
+      this.isExporting = true
+      this.errorMessage = ''
+      try {
+        const blob = await exportDocx(this.text, this.selectedFont, this.fontSize, this.margins)
+        downloadDocxBlob(blob)
+      } catch (error) {
+        this.errorMessage = 'Ошибка экспорта DOCX: ' + error.message
+      } finally {
+        this.isExporting = false
+      }
     },
     convertToGlagolitic() {
       this.text = convertDirect(this.text, glagolitic.CyrillicToGlagolitic)
@@ -331,142 +347,20 @@ export default {
     convertToCyrillic() {
       this.text = convertDirect(this.text, glagolitic.GlagoliticToCyrillic)
     },
-    exportDocx() {
-      fetch(`${API_URL}/api/export-docx/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: this.text,
-          fontSize: this.fontSize, // TODO: margins? font?
-        }),
-      })
-        .then(response => response.blob())
-        .then(blob => {
-          const url = window.URL.createObjectURL(blob)
-
-          const a = document.createElement('a')
-          a.href = url
-          a.download = 'document.docx'
-          a.click()
-
-          window.URL.revokeObjectURL(url)
-        })
-        .catch(err => {
-          console.error(err)
-          alert('Ошибка экспорта.')
-        })
-    },
-    exportPdf() {
-      fetch(`${API_URL}/api/export-pdf/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: this.text,
-          font: this.selectedFont,
-          fontSize: this.fontSize,
-          top: this.margins.top,
-          bottom: this.margins.bottom,
-          left: this.margins.left,
-          right: this.margins.right,
-        }),
-      })
-        .then(response => response.blob())
-        .then(blob => {
-          const url = window.URL.createObjectURL(blob)
-
-          const a = document.createElement('a')
-          a.href = url
-          a.download = 'document.pdf'
-          a.click()
-
-          window.URL.revokeObjectURL(url)
-        })
-        .catch(err => {
-          console.error(err)
-          alert('Ошибка экспорта.')
-        })
-    },
-    testBackend() {
-      fetch(`${API_URL}/api/ping/`)
-        .then(res => res.json())
-        .then(data => {
-          alert(data.message);
-        })
-        .catch(err => {
-          console.error(err);
-          alert(`Error connecting to backend. API_URL:${API_URL}`);
-        });
-    },
-    handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      fetch(`${API_URL}/api/import/`, {
-        method: 'POST',
-        body: formData,
-      })
-        .then(res => res.json())
-        .then(data => {
-          console.log(data);
-          if (data.text) {
-            this.text = data.text;
-          } else {
-            alert("Файл обработан, но текст не получен");
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          alert("Ошибка загрузки файла");
-        });
-    },
-    compileText() {
-      fetch(`${API_URL}/api/compile/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: this.text,
-          font: this.selectedFont,
-          fontSize: this.fontSize,
-          top: this.margins.top,
-          bottom: this.margins.bottom,
-          left: this.margins.left,
-          right: this.margins.right,
-        }),
-      })
-        .then((response) => response.blob())
-        .then((blob) => {
-          this.pdfUrl = URL.createObjectURL(blob);
-        })
-        .catch((error) => {
-          alert('Error compiling text:', error);
-        });
-    },
     insertSymbol(symbol) {
-      const textarea = this.$refs.textEditor;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
+      const textarea = this.$refs.textEditor
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
 
-      this.text =
-        this.text.slice(0, start) +
-        symbol +
-        this.text.slice(end);
+      this.text = this.text.slice(0, start) + symbol + this.text.slice(end)
 
       this.$nextTick(() => {
-        textarea.focus();
-        textarea.selectionStart = textarea.selectionEnd = start + symbol.length;
-      });
+        textarea.focus()
+        textarea.selectionStart = textarea.selectionEnd = start + symbol.length
+      })
     }
   },
-};
+}
 </script>
 
 <style scoped>
@@ -497,12 +391,17 @@ export default {
   transition: all 0.2s;
 }
 
-.toolbar button:hover {
+.toolbar button:hover:not(:disabled) {
   background: #f0f0f0;
 }
 
-.toolbar button:active {
+.toolbar button:active:not(:disabled) {
   transform: scale(0.97);
+}
+
+.toolbar button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .toolbar-right {
@@ -618,6 +517,27 @@ export default {
   background: #dcdcdc;
 }
 
+.error-toast {
+  position: fixed;
+  bottom: 300px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #d32f2f;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 1000;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -625,7 +545,6 @@ export default {
   width: 100%;
   height: 100%;
   background: rgba(0,0,0,0.35);
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -690,7 +609,7 @@ export default {
 
 @font-face {
   font-family: 'BukyVede';
-  src: url('/fonts/BukyVede.ttf'); /* TODO: BukyVede */
+  src: url('/fonts/BukyVede.ttf');
 }
 
 @font-face {
@@ -705,7 +624,7 @@ export default {
 
 @font-face {
   font-family: 'MenaionUnicode';
-  src: url('/fonts/MenaionUnicode.otf'); /* TODO: MenaionUnicode */
+  src: url('/fonts/MenaionUnicode.otf');
 }
 
 @font-face {
@@ -744,5 +663,4 @@ export default {
   line-height: 1.5;
   font-size: 14px;
 }
-
 </style>
