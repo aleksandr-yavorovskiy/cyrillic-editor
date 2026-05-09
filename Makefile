@@ -1,4 +1,4 @@
-.PHONY: build build-dev up up-dev deps deps-backend deps-frontend lint lint-backend lint-frontend format test-backend deploy
+.PHONY: build build-dev up up-dev deps deps-backend deps-frontend lint lint-backend lint-frontend format test test-backend deploy
 
 build:
 	docker compose build
@@ -30,6 +30,8 @@ deps-frontend:
 
 format:
 	cd frontend && npm run format
+
+test: test-backend
 
 test-backend:
 	cd backend && python -m pytest api/tests/ -v
