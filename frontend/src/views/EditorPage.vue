@@ -369,17 +369,43 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  overflow: hidden;
   background: #f7f8fa;
   font-family: system-ui, -apple-system, sans-serif;
 }
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
   padding: 10px 15px;
   background: #ffffff;
   border-bottom: 1px solid #e0e0e0;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+    padding: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .toolbar::-webkit-scrollbar {
+    display: none;
+  }
+  .toolbar button,
+  .toolbar select {
+    flex-shrink: 0;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  .toolbar label {
+    font-size: 12px;
+    flex-shrink: 0;
+  }
 }
 
 .toolbar button,
