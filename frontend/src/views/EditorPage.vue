@@ -179,8 +179,8 @@
 import ponomar from '@/dictionaries/PonomarUnicode.json'
 import bukyvede from '@/dictionaries/BukyVede.json'
 import flavius from '@/dictionaries/FlaviusUniversal.json'
+import flavexp from '@/dictionaries/FlavExpUniversal.json'
 import menaion from '@/dictionaries/MenaionUnicode.json'
-// TODO: add flavexp
 
 import cyrillicLetters from '@/keyboard/cyrillic.json'
 import glagoliticLetters from '@/keyboard/glagolitic.json'
@@ -196,6 +196,7 @@ const dictionaries = {
   PonomarUnicode: ponomar,
   BukyVede: bukyvede,
   FlaviusUniversal: flavius,
+  FlavExpUniversal: flavexp,
   MenaionUnicode: menaion
 }
 
