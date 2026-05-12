@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,9 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "vite preview --host",
-    "lint": "run-s lint:*",
-    "lint:oxlint": "oxlint . --fix",
-    "lint:eslint": "eslint . --fix --cache",
+    "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
@@ -22,11 +20,8 @@
     "@vitejs/plugin-vue": "^6.0.4",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-oxlint": "~1.50.0",
     "eslint-plugin-vue": "~10.8.0",
     "globals": "^17.3.0",
-    "npm-run-all2": "^8.0.4",
-    "oxlint": "~1.50.0",
     "prettier": "3.8.1",
     "vite": "^7.3.1",
     "vite-plugin-vue-devtools": "^8.0.6"
