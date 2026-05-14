@@ -6,9 +6,6 @@ import logging
 from .exceptions import ValidationError
 
 
-logger = logging.getLogger("api")
-
-
 @dataclass
 class BaseConfig:
     pass

@@ -28,7 +28,7 @@ class TestImportHandler:
             "/api/import/",
             files={"file": ("test.txt", b"Hello World")},
         )
-        assert response.status_code in [200, 500]
+        assert response.status_code == 200
 
     def test_import_unsupported_format(self):
         response = client.post(

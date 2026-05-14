@@ -1,14 +1,10 @@
 from io import BytesIO
 from docx import Document
 from PyPDF2 import PdfReader
-import logging
 
 from api.core.base import BaseImporter, BaseExporter
 from api.core.exceptions import FileProcessingError, UnsupportedFormatError
 from api.core.options import CompileOptions
-
-
-logger = logging.getLogger("api")
 
 
 class TextImporter(BaseImporter):

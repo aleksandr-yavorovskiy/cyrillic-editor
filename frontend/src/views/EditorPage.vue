@@ -20,18 +20,20 @@
         </select>
       </div>
 
+      <button @click="openFontModal">Добавить шрифт...</button>
+
       <div class="toolbar-right">
         <button @click="convertToGlagolitic">Конвертировать в глаголицу</button>
         <button @click="convertToCyrillic">Конвертировать в кириллицу</button>
         <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none" />
         <button @click="triggerFileImport">Импортировать...</button>
-        <button @click="compileText" :disabled="isCompiling">
+        <button @click="handleCompile" :disabled="isCompiling">
           {{ isCompiling ? 'Компиляция...' : 'Предпросмотр PDF' }}
         </button>
-        <button @click="exportPdf" :disabled="isExporting">
+        <button @click="handleExport('pdf')" :disabled="isExporting">
           {{ isExporting ? 'Экспорт...' : 'Экспорт в PDF' }}
         </button>
-        <button @click="exportDocx" :disabled="isExporting">
+        <button @click="handleExport('docx')" :disabled="isExporting">
           {{ isExporting ? 'Экспорт...' : 'Экспорт в .docx' }}
         </button>
       </div>
@@ -46,7 +48,7 @@
           fontFamily: selectedFont,
           fontSize: fontSize + 'pt'
         }"
-        @keydown.ctrl.s.prevent="compileText"
+        @keydown.ctrl.s.prevent="handleCompile"
       />
 
       <div class="pdf-preview">
@@ -88,91 +90,101 @@
     </div>
   </div>
 
-  <div 
-    v-if="showMarginsModal"
-    class="modal-overlay"
-    @click.self="showMarginsModal = false"
-  >
-    <div class="modal">
-      <h3>Отступы (см)</h3>
-
-      <div class="margins">
-        <div v-for="(value, key) in margins" :key="key" class="margin-control">
-          <label>{{ marginLabels[key] }}</label>
-          <input
-            type="number"
-            step="0.5"
-            min="0"
-            v-model.number="margins[key]"
-          />
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button @click="showMarginsModal = false">Закрыть</button>
+  <AppModal :show="showMarginsModal" title="Отступы (см)" @close="showMarginsModal = false">
+    <div class="margins">
+      <div v-for="(value, key) in margins" :key="key" class="margin-control">
+        <label>{{ marginLabels[key] }}</label>
+        <input type="number" step="0.5" min="0" v-model.number="margins[key]" />
       </div>
     </div>
-  </div>
 
-  <div
-    v-if="showHelpModal"
-    class="modal-overlay"
-    @click.self="showHelpModal = false"
-  >
-    <div class="modal help-modal">
-      <h3>Справка по использованию редактора</h3>
+    <div class="modal-actions">
+      <button @click="showMarginsModal = false">Закрыть</button>
+    </div>
+  </AppModal>
 
-      <div class="help-section">
-        <h4>Принцип работы:</h4>
-        <ul>
-          <li>Текст набирается в левой половине экрана, предпросмотр PDF осуществляется в правой половине.</li>
-          <li>Для настройки, импорта и экспорта используется верхнее меню с кнопками.</li>
-          <li>Для набора специальных символов используется экранная клавиатура, расположенная в нижней части экрана.</li>
-        </ul>
+  <AppModal :show="showHelpModal" title="Справка по использованию редактора" modalClass="help-modal" @close="showHelpModal = false">
+    <div class="help-section">
+      <h4>Принцип работы:</h4>
+      <ul>
+        <li>Текст набирается в левой половине экрана, предпросмотр PDF осуществляется в правой половине.</li>
+        <li>Для настройки, импорта и экспорта используется верхнее меню с кнопками.</li>
+        <li>Для набора специальных символов используется экранная клавиатура, расположенная в нижней части экрана.</li>
+      </ul>
+    </div>
+
+    <div class="help-section">
+      <h4>Кнопки панели инструментов:</h4>
+      <ul>
+        <li><strong>Настроить отступы</strong> — открывает окно для настройки полей страницы (сверху, снизу, слева, справа) в сантиметрах.</li>
+        <li><strong>Шрифт</strong> — выбор шрифта для отображения текста (PonomarUnicode, BukyVede и др.).</li>
+        <li><strong>Размер шрифта</strong> — выбор размера шрифта от 8 до 72 pt.</li>
+        <li><strong>Конвертировать в глаголицу</strong> — преобразует набранный кириллический текст в глаголицу.</li>
+        <li><strong>Конвертировать в кириллицу</strong> — преобразует набранный текст на глаголице в кириллицу.</li>
+        <li><strong>Импортировать</strong> — загрузка текста из файла (.txt, .pdf, .docx).</li>
+        <li><strong>Предпросмотр PDF</strong> — компилирует текст и показывает PDF-предпросмотр справа.</li>
+        <li><strong>Экспортировать в PDF</strong> — скачивает PDF-файл с набранным текстом.</li>
+        <li><strong>Экспорт в .docx</strong> — скачивает набранный текст в формате Word.</li>
+      </ul>
+    </div>
+
+    <div class="help-section">
+      <h4>Экранная клавиатура:</h4>
+      <ul>
+        <li><strong>Заглавные буквы</strong> — галочка для отображения/скрытия заглавных букв в кириллице.</li>
+        <li><strong>Кириллица</strong> — вкладка с буквами кириллицы (в т.ч. старославянский, церковнославянский).</li>
+        <li><strong>Буквотитла</strong> — вкладка с надстрочными буквами (буквотитла).</li>
+        <li><strong>Диакритика</strong> — вкладка с диакритическими знаками.</li>
+        <li><strong>Пунктуация</strong> — вкладка со знаками препинания.</li>
+        <li><strong>Глаголица</strong> — вкладка с глаголическими буквами.</li>
+        <li>Нажмите на любой символ на клавиатуре, чтобы вставить его в текст в позиции курсора.</li>
+      </ul>
+    </div>
+
+    <div class="help-section">
+      <h4>Горячие клавиши:</h4>
+      <ul>
+        <li><strong>F1</strong> — открыть справку.</li>
+        <li><strong>Esc</strong> — закрыть справку.</li>
+        <li><strong>Ctrl+S</strong> — скомпилировать и показать предпросмотр PDF.</li>
+      </ul>
+    </div>
+
+    <div class="modal-actions">
+      <button @click="showHelpModal = false">Закрыть</button>
+    </div>
+  </AppModal>
+
+  <AppModal :show="showFontModal" :title="expertToken ? 'Добавить шрифт' : 'Авторизация эксперта'" @close="showFontModal = false">
+    <div v-if="!expertToken">
+      <p style="font-size:13px;color:#666;margin-bottom:12px;">Для загрузки шрифта необходимо авторизоваться как эксперт.</p>
+      <div class="font-field">
+        <label>Пароль</label>
+        <input type="password" v-model="fontPassword" @keyup.enter="handleExpertLogin" />
       </div>
-
-      <div class="help-section">
-        <h4>Кнопки панели инструментов:</h4>
-        <ul>
-          <li><strong>Настроить отступы</strong> — открывает окно для настройки полей страницы (сверху, снизу, слева, справа) в сантиметрах.</li>
-          <li><strong>Шрифт</strong> — выбор шрифта для отображения текста (PonomarUnicode, BukyVede и др.).</li>
-          <li><strong>Размер шрифта</strong> — выбор размера шрифта от 8 до 72 pt.</li>
-          <li><strong>Конвертировать в глаголицу</strong> — преобразует набранный кириллический текст в глаголицу.</li>
-          <li><strong>Конвертировать в кириллицу</strong> — преобразует набранный текст на глаголице в кириллицу.</li>
-          <li><strong>Импортировать</strong> — загрузка текста из файла (.txt, .pdf, .docx).</li>
-          <li><strong>Предпросмотр PDF</strong> — компилирует текст и показывает PDF-предпросмотр справа.</li>
-          <li><strong>Экспортировать в PDF</strong> — скачивает PDF-файл с набранным текстом.</li>
-          <li><strong>Экспорт в .docx</strong> — скачивает набранный текст в формате Word.</li>
-        </ul>
-      </div>
-
-      <div class="help-section">
-        <h4>Экранная клавиатура:</h4>
-        <ul>
-          <li><strong>Заглавные буквы</strong> — галочка для отображения/скрытия заглавных букв в кириллице.</li>
-          <li><strong>Кириллица</strong> — вкладка с буквами кириллицы (в т.ч. старославянский, церковнославянский).</li>
-          <li><strong>Буквотитла</strong> — вкладка с надстрочными буквами (буквотитла).</li>
-          <li><strong>Диакритика</strong> — вкладка с диакритическими знаками.</li>
-          <li><strong>Пунктуация</strong> — вкладка со знаками препинания.</li>
-          <li><strong>Глаголица</strong> — вкладка с глаголическими буквами.</li>
-          <li>Нажмите на любой символ на клавиатуре, чтобы вставить его в текст в позиции курсора.</li>
-        </ul>
-      </div>
-
-      <div class="help-section">
-        <h4>Горячие клавиши:</h4>
-        <ul>
-          <li><strong>F1</strong> — открыть справку.</li>
-          <li><strong>Esc</strong> — закрыть справку.</li>
-          <li><strong>Ctrl+S</strong> — скомпилировать и показать предпросмотр PDF.</li>
-        </ul>
-      </div>
-
+      <p v-if="fontError" class="font-error">{{ fontError }}</p>
       <div class="modal-actions">
-        <button @click="showHelpModal = false">Закрыть</button>
+        <button @click="handleExpertLogin" :disabled="fontLoading">{{ fontLoading ? 'Подождите...' : 'Войти' }}</button>
+        <button class="btn-cancel" @click="showFontModal = false">Отмена</button>
       </div>
     </div>
-  </div>
+    <div v-else>
+      <div class="font-field">
+        <label>Название шрифта</label>
+        <input type="text" v-model="fontUploadName" placeholder="MyFont" />
+      </div>
+      <div class="font-field">
+        <label>Файл шрифта</label>
+        <input type="file" ref="fontFileInput" accept=".ttf,.otf" @change="handleFontFile" />
+      </div>
+      <p v-if="fontUploaded" class="font-success">Шрифт «{{ fontUploaded }}» добавлен!</p>
+      <p v-if="fontError" class="font-error">{{ fontError }}</p>
+      <div class="modal-actions">
+        <button @click="handleUploadFont" :disabled="fontLoading || !fontUploadFile">{{ fontLoading ? 'Загрузка...' : 'Загрузить' }}</button>
+        <button class="btn-cancel" @click="showFontModal = false">Готово</button>
+      </div>
+    </div>
+  </AppModal>
 </template>
 
 <script>
@@ -189,18 +201,41 @@ import uppercaseSymbols from '@/keyboard/uppercase.json'
 import diacriticSymbols from '@/keyboard/diacritic.json'
 import punctuationSymbols from '@/keyboard/punctuation.json'
 
-import { compileText, exportPdf, exportDocx, importFile, downloadPdfBlob, downloadDocxBlob } from '@/api/editor'
+import {
+  compileText,
+  exportPdf,
+  exportDocx,
+  importFile,
+  downloadPdfBlob,
+  downloadDocxBlob,
+  fetchFonts,
+  uploadFont,
+  createFontFace,
+  getFontUrl,
+  loadToken,
+  saveToken,
+  clearToken,
+  loginExpert,
+  verifyToken,
+} from '@/api/editor'
 import { convertText, convertDirect } from '@/utils/conversions'
+import AppModal from '@/components/AppModal.vue'
+
+const EXPORT_HANDLERS = {
+  pdf: { apiFn: exportPdf, downloadFn: downloadPdfBlob, label: 'PDF' },
+  docx: { apiFn: exportDocx, downloadFn: downloadDocxBlob, label: 'DOCX' },
+}
 
 const dictionaries = {
   PonomarUnicode: ponomar,
   BukyVede: bukyvede,
   FlaviusUniversal: flavius,
   FlavExpUniversal: flavexp,
-  MenaionUnicode: menaion
+  MenaionUnicode: menaion,
 }
 
 export default {
+  components: { AppModal },
   data() {
     return {
       text: '',
@@ -208,75 +243,62 @@ export default {
       keyboard: [
         { key: 'cyrillic', label: 'Кириллица', symbols: cyrillicLetters },
         { key: 'uppercase', label: 'Буквотитла', symbols: uppercaseSymbols },
-        { key: 'superscript', label: 'Диакритика', symbols: diacriticSymbols },
+        { key: 'diacritic', label: 'Диакритика', symbols: diacriticSymbols },
         { key: 'punctuation', label: 'Пунктуация', symbols: punctuationSymbols },
         { key: 'glagolitic', label: 'Глаголица', symbols: glagoliticLetters },
       ],
       activeTab: 'cyrillic',
       showUppercase: true,
-      fonts: [
-        'PonomarUnicode',
-        'FlaviusUniversal',
-        'FlavExpUniversal',
-        'MenaionUnicode',
-        'Bukyvede'
-      ],
-      selectedFont: 'PonomarUnicode',
-      fontSizes: [
-        8, 9, 10, 11, 12, 14, 16, 18,
-        20, 22, 24, 26, 28, 32, 36,
-        40, 48, 56, 64, 72
-      ],
+      fonts: [],
+      selectedFont: '',
+      fontSizes: [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 48, 56, 64, 72],
       fontSize: 14,
       showMarginsModal: false,
       showHelpModal: false,
       errorMessage: '',
       isCompiling: false,
       isExporting: false,
-      margins: {
-        top: 2,
-        bottom: 2,
-        left: 2,
-        right: 2
-      },
+      margins: { top: 2, bottom: 2, left: 2, right: 2 },
+      showFontModal: false,
+      expertToken: loadToken(),
+      fontPassword: '',
+      fontUploadName: '',
+      fontUploadFile: null,
+      fontLoading: false,
+      fontError: '',
+      fontUploaded: '',
     }
   },
   computed: {
     marginLabels() {
-      return {
-        top: 'Сверху',
-        bottom: 'Снизу',
-        left: 'Слева',
-        right: 'Справа'
-      }
+      return { top: 'Сверху', bottom: 'Снизу', left: 'Слева', right: 'Справа' }
     },
     activeKeyboardGroup() {
       return this.keyboard.find(g => g.key === this.activeTab)
     },
     activeSymbols() {
       if (!this.activeKeyboardGroup) return []
-
       const symbols = this.activeKeyboardGroup.symbols
       if (this.activeTab !== 'cyrillic' || this.showUppercase) return symbols
-
       return symbols.filter(s => s !== s.toUpperCase())
-    }
+    },
   },
   watch: {
     selectedFont(newFont, oldFont) {
       const fromDict = dictionaries[oldFont]
       const toDict = dictionaries[newFont]
-
       if (fromDict && toDict) {
         this.text = convertText(this.text, fromDict, toDict)
       }
-    }
+    },
   },
-  mounted() {
+  async mounted() {
     document.addEventListener('keydown', this.handleKeydown)
+    await this.loadFonts()
   },
   beforeUnmount() {
     document.removeEventListener('keydown', this.handleKeydown)
+    if (this.pdfUrl) URL.revokeObjectURL(this.pdfUrl)
   },
   methods: {
     handleKeydown(e) {
@@ -286,6 +308,7 @@ export default {
       } else if (e.key === 'Escape') {
         this.showHelpModal = false
         this.showMarginsModal = false
+        this.showFontModal = false
         this.errorMessage = ''
       }
     },
@@ -296,21 +319,18 @@ export default {
     async handleFileUpload(event) {
       const file = event.target.files[0]
       if (!file) return
-
       try {
         this.text = await importFile(file)
       } catch (error) {
         this.errorMessage = error.message || 'Ошибка загрузки файла'
       }
     },
-    async compileText() {
+    async handleCompile() {
       this.isCompiling = true
       this.errorMessage = ''
       try {
         const blob = await compileText(this.text, this.selectedFont, this.fontSize, this.margins)
-        if (this.pdfUrl) {
-          URL.revokeObjectURL(this.pdfUrl)
-        }
+        if (this.pdfUrl) URL.revokeObjectURL(this.pdfUrl)
         this.pdfUrl = URL.createObjectURL(blob)
       } catch (error) {
         this.errorMessage = 'Ошибка компиляции: ' + error.message
@@ -318,26 +338,16 @@ export default {
         this.isCompiling = false
       }
     },
-    async exportPdf() {
+    async handleExport(type) {
+      const handler = EXPORT_HANDLERS[type]
+      if (!handler) return
       this.isExporting = true
       this.errorMessage = ''
       try {
-        const blob = await exportPdf(this.text, this.selectedFont, this.fontSize, this.margins)
-        downloadPdfBlob(blob)
+        const blob = await handler.apiFn(this.text, this.selectedFont, this.fontSize, this.margins)
+        handler.downloadFn(blob)
       } catch (error) {
-        this.errorMessage = 'Ошибка экспорта PDF: ' + error.message
-      } finally {
-        this.isExporting = false
-      }
-    },
-    async exportDocx() {
-      this.isExporting = true
-      this.errorMessage = ''
-      try {
-        const blob = await exportDocx(this.text, this.selectedFont, this.fontSize, this.margins)
-        downloadDocxBlob(blob)
-      } catch (error) {
-        this.errorMessage = 'Ошибка экспорта DOCX: ' + error.message
+        this.errorMessage = 'Ошибка экспорта ' + handler.label + ': ' + error.message
       } finally {
         this.isExporting = false
       }
@@ -348,18 +358,99 @@ export default {
     convertToCyrillic() {
       this.text = convertDirect(this.text, glagolitic.GlagoliticToCyrillic)
     },
+    async openFontModal() {
+      this.fontError = ''
+      this.fontUploaded = ''
+      this.fontUploadFile = null
+      this.fontUploadName = ''
+      this.fontPassword = ''
+      if (this.$refs.fontFileInput) this.$refs.fontFileInput.value = ''
+
+      if (this.expertToken) {
+        const ok = await verifyToken(this.expertToken)
+        if (!ok) {
+          this.expertToken = ''
+          clearToken()
+        }
+      }
+      this.showFontModal = true
+    },
+    async handleExpertLogin() {
+      if (!this.fontPassword) {
+        this.fontError = 'Введите пароль'
+        return
+      }
+      this.fontLoading = true
+      this.fontError = ''
+      try {
+        const token = await loginExpert(this.fontPassword)
+        this.expertToken = token
+        saveToken(token)
+      } catch (e) {
+        this.fontError = e.message || 'Ошибка входа'
+      } finally {
+        this.fontLoading = false
+      }
+    },
+    handleFontFile(event) {
+      this.fontUploadFile = event.target.files[0] || null
+    },
+    async handleUploadFont() {
+      const file = this.fontUploadFile
+      if (!file) {
+        this.fontError = 'Выберите файл шрифта'
+        return
+      }
+      const name = this.fontUploadName.trim()
+      if (!name) {
+        this.fontError = 'Введите название шрифта'
+        return
+      }
+
+      this.fontLoading = true
+      this.fontError = ''
+      this.fontUploaded = ''
+      try {
+        await uploadFont(file, name, this.expertToken)
+
+        if (!this.fonts.includes(name)) this.fonts.push(name)
+        this.selectedFont = name
+
+        createFontFace(name, getFontUrl(name))
+
+        this.fontUploaded = name
+        this.fontUploadFile = null
+        this.fontUploadName = ''
+        if (this.$refs.fontFileInput) this.$refs.fontFileInput.value = ''
+      } catch (e) {
+        this.fontError = e.message || 'Ошибка загрузки'
+      } finally {
+        this.fontLoading = false
+      }
+    },
     insertSymbol(symbol) {
       const textarea = this.$refs.textEditor
+      if (document.activeElement !== textarea) textarea.focus()
       const start = textarea.selectionStart
       const end = textarea.selectionEnd
-
       this.text = this.text.slice(0, start) + symbol + this.text.slice(end)
-
       this.$nextTick(() => {
-        textarea.focus()
         textarea.selectionStart = textarea.selectionEnd = start + symbol.length
       })
-    }
+    },
+    async loadFonts() {
+      try {
+        const names = await fetchFonts()
+        if (!names.length) return
+        this.fonts = names
+        this.selectedFont = names[0]
+        for (const name of names) {
+          createFontFace(name, getFontUrl(name))
+        }
+      } catch {
+        // ignore
+      }
+    },
   },
 }
 </script>
@@ -565,30 +656,6 @@ export default {
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  min-width: 320px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.modal h3 {
-  margin-bottom: 15px;
-}
-
 .margins {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -634,43 +701,54 @@ export default {
   border: 1px solid #ccc;
 }
 
-@font-face {
-  font-family: 'BukyVede';
-  src: url('/fonts/BukyVede.ttf');
+.font-field {
+  margin-bottom: 14px;
 }
 
-@font-face {
-  font-family: 'FlaviusUniversal';
-  src: url('/fonts/FlaviusUniversal.ttf');
+.font-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #555;
 }
 
-@font-face {
-  font-family: 'FlavExpUniversal';
-  src: url('/fonts/FlavExpUniversal.ttf');
+.font-field input[type="text"],
+.font-field input[type="password"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
 }
 
-@font-face {
-  font-family: 'MenaionUnicode';
-  src: url('/fonts/MenaionUnicode.otf');
+.font-field input:focus {
+  border-color: #4a90e2;
 }
 
-@font-face {
-  font-family: 'PonomarUnicode';
-  src: url('/fonts/PonomarUnicode.otf');
+.font-error {
+  color: #d32f2f;
+  font-size: 13px;
+  margin-bottom: 10px;
 }
 
-.help-modal {
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
+.font-success {
+  color: #2e7d32;
+  font-size: 13px;
+  margin-bottom: 10px;
 }
 
-.help-modal h3 {
-  margin-bottom: 20px;
-  color: #333;
+.btn-cancel {
+  background: #999 !important;
+  margin-left: 8px;
 }
 
-.help-modal h4 {
+.btn-cancel:hover {
+  background: #777 !important;
+}
+
+.help-section h4 {
   margin: 15px 0 10px 0;
   color: #4a90e2;
   font-size: 16px;

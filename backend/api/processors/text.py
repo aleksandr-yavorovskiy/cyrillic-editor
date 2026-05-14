@@ -1,10 +1,5 @@
-import logging
-
 from api.core.base import BaseProcessor
 from api.core.exceptions import ValidationError
-
-
-logger = logging.getLogger("api")
 
 
 class LatexEscaper(BaseProcessor):

@@ -1,8 +1,3 @@
-import logging
-
-logger = logging.getLogger("api")
-
-
 class APIError(Exception):
     status_code = 500
 

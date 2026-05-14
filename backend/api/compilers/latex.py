@@ -6,7 +6,7 @@ import logging
 from io import BytesIO
 
 from api.core.base import BaseCompiler
-from api.core.exceptions import CompilationError, ValidationError
+from api.core.exceptions import CompilationError
 from api.config import config
 
 
@@ -55,12 +55,6 @@ class LatexCompiler(BaseCompiler):
 
             with open(output_path, "rb") as f:
                 return BytesIO(f.read())
-
-    @staticmethod
-    def validate_source(source: str) -> None:
-        if not source or not isinstance(source, str):
-            raise ValidationError("Source must be a non-empty string")
-
 
 class LatexBuilder:
     def __init__(self, font_dir: Path = None):
