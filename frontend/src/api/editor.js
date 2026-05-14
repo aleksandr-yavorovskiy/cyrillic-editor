@@ -55,7 +55,7 @@ export async function compileText(text, font, fontSize, margins) {
 
 export async function exportPdf(text, font, fontSize, margins) {
   const payload = buildCompilePayload(text, font, fontSize, margins)
-  return fetchBlob(`${API_URL}/api/export-pdf/`, {
+  return fetchBlob(`${API_URL}/api/export/pdf/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -63,7 +63,7 @@ export async function exportPdf(text, font, fontSize, margins) {
 }
 
 export async function exportDocx(text, font, fontSize, margins) {
-  return fetchBlob(`${API_URL}/api/export-docx/`, {
+  return fetchBlob(`${API_URL}/api/export/docx/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text, font, fontSize, ...margins }),

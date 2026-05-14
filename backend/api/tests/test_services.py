@@ -1,7 +1,8 @@
 from unittest.mock import Mock
 from io import BytesIO
 
-from api.services import CompilationService, CompileOptions
+from api.services import CompilationService
+from api.core.options import CompileOptions
 
 
 class TestCompileOptions:

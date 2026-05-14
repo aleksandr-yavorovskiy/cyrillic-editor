@@ -5,6 +5,7 @@ import logging
 
 from api.core.base import BaseImporter, BaseExporter
 from api.core.exceptions import FileProcessingError, UnsupportedFormatError
+from api.core.options import CompileOptions
 
 
 logger = logging.getLogger("api")
@@ -48,7 +49,7 @@ class PdfImporter(BaseImporter):
 
 
 class DocxExporter(BaseExporter):
-    def export(self, text: str) -> BytesIO:
+    def export(self, text: str, options=None) -> BytesIO:
         try:
             document = Document()
             for line in text.split("\n"):
@@ -61,22 +62,30 @@ class DocxExporter(BaseExporter):
             raise FileProcessingError(f"Failed to create DOCX file: {e}")
 
 
-class ConverterRegistry:
-    _instance = None
+class PdfExporter(BaseExporter):
+    def __init__(self, compilation_service=None):
+        self._service = compilation_service
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._importers = {}
-            cls._instance._exporters = {}
-            cls._instance._initialize()
-        return cls._instance
+    def export(self, text: str, options=None) -> BytesIO:
+        from api.services import CompilationService  # lazy import to break circular dep
+
+        opts = options or CompileOptions()
+        service = self._service or CompilationService()
+        return service.compile(text, opts)
+
+
+class ConverterRegistry:
+    def __init__(self):
+        self._importers = {}
+        self._exporters = {}
+        self._initialize()
 
     def _initialize(self):
         self.register_importer(".txt", TextImporter())
         self.register_importer(".docx", DocxImporter())
         self.register_importer(".pdf", PdfImporter())
         self.register_exporter(".docx", DocxExporter())
+        self.register_exporter(".pdf", PdfExporter())
 
     def register_importer(self, ext: str, importer: BaseImporter):
         self._importers[ext] = importer

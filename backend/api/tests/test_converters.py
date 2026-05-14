@@ -183,15 +183,15 @@ class TestConverterRegistry:
         with pytest.raises(Exception, match="Unsupported file format"):
             registry.detect_extension("test.xyz")
 
-    def test_singleton_pattern(self):
+    def test_separate_instances(self):
         registry1 = ConverterRegistry()
         registry2 = ConverterRegistry()
-        assert registry1 is registry2
+        assert registry1 is not registry2
 
     def test_initialization(self):
         registry = ConverterRegistry()
-        # Check that default importers/exporters are registered
         assert ".txt" in registry.importers
         assert ".docx" in registry.importers
         assert ".pdf" in registry.importers
         assert ".docx" in registry.exporters
+        assert ".pdf" in registry.exporters

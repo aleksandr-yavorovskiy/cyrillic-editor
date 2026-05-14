@@ -1,11 +1,13 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from django.conf import settings
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 @dataclass(frozen=True)
 class AppConfig:
-    FONT_DIR: Path = field(default_factory=lambda: Path(settings.BASE_DIR) / "fonts")
+    FONT_DIR: Path = field(default_factory=lambda: BASE_DIR / "fonts")
     DEFAULT_FONT_SIZE: int = 14
     DEFAULT_MARGIN_CM: int = 2
     SOFT_BREAK_THRESHOLD: int = 15

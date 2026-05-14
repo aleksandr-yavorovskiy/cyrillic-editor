@@ -45,7 +45,7 @@ class BaseImporter(ABC):
 
 class BaseExporter(ABC):
     @abstractmethod
-    def export(self, text: str) -> Any:
+    def export(self, text: str, options=None) -> Any:
         pass
 
 
