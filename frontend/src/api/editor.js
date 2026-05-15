@@ -93,7 +93,7 @@ export function createFontFace(name, url) {
 }
 
 export function getFontUrl(name) {
-  return `${API_URL}/api/fonts/${encodeURIComponent(name)}`
+  return `${API_URL}/api/fonts/${encodeURIComponent(name)}/`
 }
 
 // -- auth --
@@ -111,7 +111,7 @@ export function clearToken() {
 }
 
 export async function loginExpert(password) {
-  const data = await fetchJson(`${API_URL}/api/auth/token`, {
+  const data = await fetchJson(`${API_URL}/api/auth/token/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: 'expert', password }),
@@ -120,7 +120,7 @@ export async function loginExpert(password) {
 }
 
 export async function verifyToken(token) {
-  const res = await fetch(`${API_URL}/api/auth/verify`, {
+  const res = await fetch(`${API_URL}/api/auth/verify/`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   return res.ok

@@ -10,7 +10,7 @@ FONT_CONTENT = b"fake font content"
 
 
 def get_token():
-    resp = client.post("/api/auth/token", json={
+    resp = client.post("/api/auth/token/", json={
         "username": "expert",
         "password": "expert123",
     })
@@ -94,7 +94,7 @@ class TestUploadFont:
 
 class TestGetFont:
     def test_get_font_404(self):
-        response = client.get("/api/fonts/nonexistent")
+        response = client.get("/api/fonts/nonexistent/")
         assert response.status_code == 404
 
     def test_get_uploaded_font(self):
@@ -106,18 +106,18 @@ class TestGetFont:
             files={"file": ("gettest.ttf", FONT_CONTENT)},
             headers={"Authorization": f"Bearer {token}"},
         )
-        response = client.get(f"/api/fonts/{name}")
+        response = client.get(f"/api/fonts/{name}/")
         assert response.status_code == 200
         assert response.content == FONT_CONTENT
 
     def test_get_font_with_path_traversal(self):
-        response = client.get("/api/fonts/../etc/passwd")
+        response = client.get("/api/fonts/../etc/passwd/")
         assert response.status_code == 404
 
 
 class TestDeleteFont:
     def test_delete_without_auth(self):
-        response = client.delete("/api/fonts/somefont")
+        response = client.delete("/api/fonts/somefont/")
         assert response.status_code == 401
 
     def test_delete_success(self):
@@ -130,7 +130,7 @@ class TestDeleteFont:
             headers={"Authorization": f"Bearer {token}"},
         )
         response = client.delete(
-            f"/api/fonts/{name}",
+            f"/api/fonts/{name}/",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 204
@@ -138,7 +138,7 @@ class TestDeleteFont:
     def test_delete_nonexistent(self):
         token = get_token()
         response = client.delete(
-            "/api/fonts/nonexistent",
+            "/api/fonts/nonexistent/",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 404

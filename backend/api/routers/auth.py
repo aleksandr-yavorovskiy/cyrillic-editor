@@ -26,7 +26,7 @@ def _generate_token() -> str:
     return str(uuid.uuid4())
 
 
-@router.post("/register", response_model=TokenResponse)
+@router.post("/register/", response_model=TokenResponse)
 async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(select(User).where(User.username == req.username))
     if existing.scalar_one_or_none():
@@ -43,7 +43,7 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     return TokenResponse(token=user.token, user_id=user.id, username=user.username)
 
 
-@router.post("/token", response_model=TokenResponse)
+@router.post("/token/", response_model=TokenResponse)
 async def login(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.username == req.username))
     user = result.scalar_one_or_none()
@@ -58,6 +58,6 @@ async def login(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     return TokenResponse(token=user.token, user_id=user.id, username=user.username)
 
 
-@router.get("/verify")
+@router.get("/verify/")
 async def verify_token(user: User = Depends(get_current_user)):
     return {"valid": True, "user_id": user.id, "username": user.username}

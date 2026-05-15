@@ -87,7 +87,7 @@ async def upload_font(
     return FontResponse(name=dest.stem, size=dest.stat().st_size)
 
 
-@router.get("/{font_name}")
+@router.get("/{font_name}/")
 async def get_font(font_name: str):
     path = _resolve_font_path(font_name)
     if path is None:
@@ -95,7 +95,7 @@ async def get_font(font_name: str):
     return FileResponse(path, media_type="application/octet-stream")
 
 
-@router.delete("/{font_name}", status_code=204)
+@router.delete("/{font_name}/", status_code=204)
 async def delete_font(
     font_name: str,
     user: User | None = Depends(get_current_user_optional),

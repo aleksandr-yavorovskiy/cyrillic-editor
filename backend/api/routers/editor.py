@@ -18,7 +18,7 @@ compilation_service = CompilationService()
 import_service = ImportService()
 export_service = ExportService()
 
-router = APIRouter(tags=["editor"])
+router = APIRouter(prefix="/api", tags=["editor"])
 
 
 def check_size(text_or_bytes: str | bytes) -> None:
@@ -41,12 +41,12 @@ def _make_options(req: TextRequest) -> CompileOptions:
     )
 
 
-@router.get("/api/ping/")
+@router.get("/ping/")
 async def ping():
     return {"status": "ok", "message": "Hello from backend!"}
 
 
-@router.post("/api/compile/")
+@router.post("/compile/")
 async def compile_text(req: TextRequest):
     try:
         check_size(req.text)
@@ -63,7 +63,7 @@ async def compile_text(req: TextRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/export/pdf/")
+@router.post("/export/pdf/")
 async def export_pdf(req: TextRequest):
     check_size(req.text)
     try:
@@ -79,7 +79,7 @@ async def export_pdf(req: TextRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/api/export/docx/")
+@router.post("/export/docx/")
 async def export_docx(req: TextRequest):
     check_size(req.text)
     try:
@@ -95,7 +95,7 @@ async def export_docx(req: TextRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/api/import/")
+@router.post("/import/")
 async def import_file(file: UploadFile = File(...)):
     file_data = await file.read()
     check_size(file_data)
