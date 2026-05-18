@@ -1,5 +1,6 @@
 from io import BytesIO
 from docx import Document
+from docx.shared import Pt
 from PyPDF2 import PdfReader
 
 from api.core.base import BaseImporter, BaseExporter
@@ -48,8 +49,13 @@ class DocxExporter(BaseExporter):
     def export(self, text: str, options=None) -> BytesIO:
         try:
             document = Document()
+            opts = options or CompileOptions()
             for line in text.split("\n"):
-                document.add_paragraph(line)
+                paragraph = document.add_paragraph()
+                run = paragraph.add_run(line)
+                if opts.font:
+                    run.font.name = opts.font
+                run.font.size = Pt(opts.fontSize)
             buffer = BytesIO()
             document.save(buffer)
             buffer.seek(0)
