@@ -5,14 +5,14 @@
 [![lint: frontend](https://img.shields.io/github/actions/workflow/status/aleksandr-yavorovskiy/cyrillic-editor/ci.yml?label=lint%20frontend&job=frontend-lint)](https://github.com/aleksandr-yavorovskiy/cyrillic-editor/actions/workflows/ci.yml)
 [![tests: backend](https://img.shields.io/github/actions/workflow/status/aleksandr-yavorovskiy/cyrillic-editor/ci.yml?label=tests%20backend&job=backend-test)](https://github.com/aleksandr-yavorovskiy/cyrillic-editor/actions/workflows/ci.yml)
 
-Веб-редактор кириллических (церковнославянских, старославянских) текстов с поддержкой глаголицы, виртуальными клавиатурами, словарями для конвертации, компиляцией в PDF через TeX и экспортом в DOCX.
+Веб-редактор кириллических (церковнославянских, старославянских) текстов с поддержкой глаголицы, виртуальной клавиатурой, словарями для корректной конвертации, компиляцией в PDF через TeX и экспортом в DOCX.
 
 ## Развертывание
 Пререквизиты: 
 1. Docker и Docker Compose.
 2. в `./backend/.env` заполнить значение:
 ```
-DJANGO_SECRET_KEY=<your_value>
+EXPERT_PASSWORD=<your_value>
 ```
 
 ### Production
